@@ -1,5 +1,22 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Секреты и локальные данные
 .env
 report.json
+fixer_log.jsonl
+fixer_backups/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
