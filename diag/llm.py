@@ -1,7 +1,7 @@
 """Опциональный слой: LLM объясняет находки человеческим языком.
    Не выполняет никаких действий — только текст.
 
-   Поддерживает два бэкенда:
+   Бэкенды:
    - Ollama (локально, работает в РФ без блокировок) — по умолчанию
    - Anthropic (если LLM_BACKEND=anthropic и есть ANTHROPIC_API_KEY)
 """
@@ -9,40 +9,61 @@ import json
 import os
 
 
-PROMPT = """Ты — опытный системный администратор Windows. Тебе дали
-результаты диагностики компьютера в виде JSON и список найденных проблем.
+PROMPT = """Ты — опытный системный администратор Windows. Тебе дали JSON
+с диагностикой и список найденных проблем (findings).
 
-Задача — короткий разбор (5–8 предложений) на русском:
+СТРОГИЕ ПРАВИЛА:
 
-1. Начни с САМОЙ важной проблемы (severity=high важнее medium).
-2. Для каждой проблемы из списка назови ОДИН конкретный шаг —
-   команду, настройку или куда зайти. Без «стоит проверить» —
-   конкретика: «Откройте Параметры → Система → Память → Временные файлы».
-3. Если проблема — диск, назови текущий процент и что удалить
-   в первую очередь (Docker, Steam, cleanmgr, Windows.old).
-4. Если проблема — Event Log, упомяни конкретные ID (7000, 10010, 1801)
-   и что они обычно означают.
-5. Не выдумывай проблем, которых нет в findings.
-6. Не предлагай команд, которые меняют реестр или файлы — только
-   диагностика и безопасные шаги.
-7. Обращайся на «вы». Без воды и без общих фраз.
+1. Пройди по КАЖДОМУ finding из списка. Для каждого — одно короткое
+   предложение с конкретным шагом. Не останавливайся на первом.
+   Если findings 5 — должно быть минимум 5 предложений.
+2. Порядок: сначала severity=high, потом medium, потом low.
+3. Для каждой проблемы назови ОДИН конкретный шаг: команду, настройку,
+   куда зайти. Не «проверьте», а «откройте Параметры → Система → Память
+   → Временные файлы».
+4. Если есть крупные папки (folder_sizes) — назови конкретную папку
+   и её размер. Например: «В AppData 46 ГБ — проверьте
+   AppData\\Local\\Docker и кэши браузеров».
+5. Если проблема с SSD (Wear) — скажи, сколько процентов осталось,
+   и что делать (бэкап, следить, планировать замену).
+6. НЕ выдумывай программы, которых нет в данных. Если видишь Code.exe —
+   говори Code.exe, не «Steam» и не «Chrome».
+7. Не пиши C:\\\\ — пиши C:\\. Это путь, не escape-последовательность.
+8. 6–10 предложений. По-русски. На «вы». Без воды.
+9. Если все findings низкого приоритета — так и скажи одной фразой.
 
-Данные диагностики:
+Данные:
 {data}
 
-Найденные проблемы:
+Findings:
 {findings}
 """
 
 
 def _slim(data: dict) -> dict:
+    """Только то, что реально нужно LLM для объяснения.
+    Важно: включаем disk_health (Wear, temperature) и folder_sizes,
+    иначе модель не видит износ SSD и крупные папки."""
     return {
-        "system": data.get("system", {}),
         "load": data.get("load", {}),
         "disks": data.get("disks", []),
-        "top_ram": data.get("processes", {}).get("top_ram", [])[:5],
-        "top_cpu": data.get("processes", {}).get("top_cpu", [])[:5],
-        "event_errors": data.get("event_errors", [])[:10],
+        "disk_health": [
+            {
+                "model": d.get("model"),
+                "health": d.get("health_status"),
+                "wear_pct": d.get("wear"),
+                "temp_c": d.get("temperature"),
+                "power_on_hours": d.get("power_on_hours"),
+                "predict_failure": d.get("predict_failure"),
+            }
+            for d in data.get("disk_health", [])
+        ],
+        "folder_sizes": data.get("folder_sizes", [])[:8],
+        "network": {
+            "gateway": data.get("network", {}).get("gateway"),
+            "pings": data.get("network", {}).get("pings", []),
+        },
+        "event_errors_count": len(data.get("event_errors", [])),
         "startup_count": len(data.get("startup", [])),
     }
 
@@ -62,13 +83,24 @@ def _explain_ollama(prompt: str) -> str | None:
         import requests
         resp = requests.post(
             f"{host}/api/generate",
-            json={"model": model, "prompt": prompt, "stream": False},
-            timeout=120,
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.2,
+                    "num_predict": 400,
+                },
+            },
+            timeout=180,
         )
         resp.raise_for_status()
         return resp.json().get("response", "").strip() or None
     except Exception as e:
-        return f"[Ollama error: {e}. Проверьте, что Ollama запущен и модель {model} скачана: ollama list]"
+        return (
+            f"[Ollama error: {e}. Проверьте, что Ollama запущен "
+            f"и модель {model} скачана: ollama list]"
+        )
 
 
 def _explain_anthropic(prompt: str) -> str | None:

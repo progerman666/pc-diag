@@ -3,8 +3,10 @@ import json
 import os
 import platform
 import re
+import shutil
 import subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 
 import psutil
 
@@ -17,7 +19,27 @@ LEVEL_RU = {
     "Информация": "Информация",
 }
 
-SMARTCTL = r"C:\Program Files\smartmontools\bin\smartctl.exe"
+
+def _find_smartctl() -> str:
+    """Ищет smartctl в нескольких местах:
+    1. рядом с папкой diag (../smartctl/smartctl.exe) — для портативной версии
+    2. в текущей рабочей папке (smartctl/smartctl.exe)
+    3. в стандартном месте установки smartmontools
+    4. в PATH
+    """
+    candidates = [
+        Path(__file__).parent.parent / "smartctl" / "smartctl.exe",
+        Path.cwd() / "smartctl" / "smartctl.exe",
+        Path(r"C:\Program Files\smartmontools\bin\smartctl.exe"),
+        Path(r"C:\Program Files (x86)\smartmontools\bin\smartctl.exe"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return str(p)
+    return shutil.which("smartctl") or ""
+
+
+SMARTCTL = _find_smartctl()
 
 
 def _run(cmd: list[str], timeout: int = 10) -> str:
@@ -119,7 +141,7 @@ def get_disks() -> list[dict]:
 def _smartctl_scan() -> dict:
     """Возвращает {device_id: '/dev/sda' или '/dev/pd0'}.
     Использует smartctl --scan для маппинга индексов на устройства."""
-    if not os.path.exists(SMARTCTL):
+    if not SMARTCTL or not os.path.exists(SMARTCTL):
         return {}
     try:
         r = subprocess.run(
@@ -136,7 +158,6 @@ def _smartctl_scan() -> dict:
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        # Пример: /dev/sda -d ata # /dev/sda, ATA device
         dev = line.split()[0]
         mapping[str(idx)] = dev
         idx += 1
@@ -145,14 +166,13 @@ def _smartctl_scan() -> dict:
 
 def _smartctl_query(device: str) -> dict:
     """Запрашивает smartctl -a -j <device>, парсит ключевые поля."""
-    if not os.path.exists(SMARTCTL) or not device:
+    if not SMARTCTL or not os.path.exists(SMARTCTL) or not device:
         return {}
     try:
         r = subprocess.run(
             [SMARTCTL, "-a", "-j", device],
             capture_output=True, timeout=30,
         )
-        # Коды возврата smartctl: 0 = ok, 1 = SMART warning, 4 = prefail
         if r.returncode not in (0, 1, 2, 4, 8):
             return {}
         raw = r.stdout.decode("utf-8", errors="replace").strip()
@@ -164,17 +184,14 @@ def _smartctl_query(device: str) -> dict:
 
     out = {}
 
-    # Температура
     temp = data.get("temperature", {}).get("current")
     if temp is not None:
         out["temperature"] = int(temp)
 
-    # Наработка (ATA/SCSI)
     poh = data.get("power_on_time", {}).get("hours")
     if poh is not None:
         out["power_on_hours"] = int(poh)
 
-    # NVMe-специфичные поля
     nvme = data.get("nvme_smart_health_information_log", {})
     if nvme:
         pu = nvme.get("percentage_used")
@@ -187,7 +204,6 @@ def _smartctl_query(device: str) -> dict:
         if nvme_poh is not None and "power_on_hours" not in out:
             out["power_on_hours"] = int(nvme_poh)
 
-    # ATA-атрибуты (SATA SSD/HDD)
     ata = data.get("ata_smart_attributes", {}).get("table", [])
     for attr in ata:
         name = (attr.get("name") or "").lower()
@@ -200,25 +216,20 @@ def _smartctl_query(device: str) -> dict:
             continue
 
         if "ssd_life_left" in name and "wear" not in out:
-            # остаток ресурса → износ = 100 - остаток
             out["wear"] = max(0, min(100, 100 - rv))
         elif "wear_leveling" in name and "wear" not in out:
-            # raw = среднее число циклов стирания, не проценты —
-            # но поле полезно для оценки
             out["wear_leveling_count"] = rv
         elif name == "reallocated_sector_ct":
             out["reallocated_sectors"] = rv
         elif name == "power_on_hours" and "power_on_hours" not in out:
             out["power_on_hours"] = rv
         elif name == "temperature_celsius" and "temperature" not in out:
-            # raw обычно "35 (Min/Max ...)" — первое число
             m = re.match(r"(\d+)", str(raw_val))
             if m:
                 out["temperature"] = int(m.group(1))
         elif "media_wearout_indicator" in name and "wear" not in out:
             out["wear"] = max(0, min(100, 100 - rv))
 
-    # Общий статус SMART
     passed = data.get("smart_status", {}).get("passed")
     if passed is not None:
         out["health_passed"] = bool(passed)
@@ -228,13 +239,7 @@ def _smartctl_query(device: str) -> dict:
 
 def get_disk_health() -> list[dict]:
     """SMART-статус физических дисков.
-
-    Источники (по приоритету):
-      1. Get-PhysicalDisk + Get-StorageReliabilityCounter (WMI)
-      2. MSStorageDriver_FailurePredictStatus (WMI)
-      3. smartctl (smartmontools) — если WMI не дал ключевые поля
-    """
-    # 1. Базовый статус
+    Источники: WMI (Get-PhysicalDisk), PredictFailure, smartctl (fallback)."""
     ps_base = (
         "Get-PhysicalDisk | Select-Object FriendlyName, MediaType, "
         "HealthStatus, OperationalStatus, DeviceId | ConvertTo-Json -Compress"
@@ -250,7 +255,6 @@ def get_disk_health() -> list[dict]:
         except Exception:
             pass
 
-    # 2. Детальные счётчики WMI
     ps_rel = (
         "Get-PhysicalDisk | Get-StorageReliabilityCounter | "
         "Select-Object DeviceId, Temperature, Wear, PowerOnHours, "
@@ -271,7 +275,6 @@ def get_disk_health() -> list[dict]:
         except Exception:
             pass
 
-    # 3. PredictFailure
     ps_fail = (
         "Get-CimInstance -Namespace root\\wmi "
         "-ClassName MSStorageDriver_FailurePredictStatus "
@@ -295,10 +298,8 @@ def get_disk_health() -> list[dict]:
         except Exception:
             pass
 
-    # 4. Маппинг device_id → /dev/sdX для smartctl (сканируем один раз)
     smart_map = _smartctl_scan()
 
-    # Сборка результата
     result = []
     for b in base_list:
         dev_id = b.get("DeviceId")
@@ -323,12 +324,10 @@ def get_disk_health() -> list[dict]:
             "source": "wmi",
         }
 
-        # Нулевые значения WMI = "нет данных", а не "0 градусов"
         for k in ("temperature", "wear", "power_on_hours"):
             if entry[k] == 0:
                 entry[k] = None
 
-        # Fallback на smartctl, если ключевые поля пустые
         if (entry["temperature"] is None
                 or entry["wear"] is None
                 or entry["power_on_hours"] is None):

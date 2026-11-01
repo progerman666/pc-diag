@@ -12,6 +12,21 @@ report.json
 fixer_log.jsonl
 fixer_backups/
 
+# Build artifacts (PyInstaller)
+build/
+dist/
+*.spec
+
+# Releases
+pc-diag-win64-portable.zip
+pc-diag-setup.exe
+
+# Inno Setup output
+Output/
+
+# Локальные файлы
+social-preview.png
+
 # IDE
 .vscode/
 .idea/
