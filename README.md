@@ -7,10 +7,15 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/progerman666/pc-diag)](https://github.com/progerman666/pc-diag/releases)
 
 `pc-diag` — это не «ещё один cleaner». Это диагностический инструмент,
 который **сначала смотрит, потом объясняет, и только потом предлагает
 исправить** — с подтверждением и логом каждого действия.
+
+Работает без установки (portable), без интернета, без прав администратора
+(с ограничениями по SMART). Есть установщик для тех, кто хочет «как
+обычную программу».
 
 ---
 
@@ -25,23 +30,26 @@
 - **Диски**: заполнение, ФС, свободное место с визуальной шкалой.
 - **SMART**: `HealthStatus`, `PredictFailure`, температура, износ SSD
   (`Wear`), наработка (`PowerOnHours`), некорректируемые ошибки
-  чтения/записи. Fallback на `smartctl` (smartmontools), если WMI
+  чтения/записи. Fallback на `smartctl` (встроен в сборку), если WMI
   не отдаёт счётчики.
-- **Сеть**: интерфейс, шлюз, DNS, пинг до шлюза и `8.8.8.8` (потери, RTT).
+- **Сеть**: интерфейс, шлюз, DNS, пинг до шлюза и `8.8.8.8`
+  (потери, RTT).
 - **Автозагрузка**: имя, команда, локация, пользователь.
-- **Службы**: авто-службы в состоянии не `Running` (с фильтром триггер-старт,
-  чтобы не пугать `gpsvc`/`sppsvc`/`storSvc`).
-- **Event Log**: ошибки и `Critical` из System-лога за 24 часа, с русскими
-  названиями уровней.
-- **Размеры папок**: топ-20 в профиле пользователя (медленно, есть `--fast`).
+- **Службы**: авто-службы в состоянии не `Running` (с фильтром
+  триггер-старт, чтобы не пугать `gpsvc`/`sppsvc`/`StiSvc`).
+- **Event Log**: ошибки и `Critical` из System-лога за 24 часа,
+  с русскими названиями уровней.
+- **Размеры папок**: топ-20 в профиле пользователя
+  (медленно, есть `--fast`).
 
 ### Анализ
 
-- **15+ детерминированных правил**: RAM/CPU, заполнение дисков, износ SSD,
-  потеря пакетов, ошибки в журнале, раздутая автозагрузка, крупные папки.
-- **LLM-объяснение** (опционально): локальная Ollama (`qwen2.5:3b` / `7b`)
-  или облачный Claude. Модель не выполняет действий — только объясняет
-  находки человеческим языком.
+- **15+ детерминированных правил**: RAM/CPU, заполнение дисков,
+  износ SSD, потеря пакетов, ошибки в журнале, раздутая автозагрузка,
+  крупные папки.
+- **LLM-объяснение** (опционально): локальная Ollama (`qwen2.5:3b` /
+  `7b`) или облачный Claude. Модель **не выполняет** действий —
+  только объясняет находки человеческим языком.
 
 ### Безопасные исправления (`fixer`)
 
@@ -49,10 +57,10 @@
 
 - `clean_temp` — очистка `%TEMP%` и `C:\Windows\Temp`
 - `clean_recycle` — очистка корзины
-- `disable_startup` — отключение записи автозагрузки (только `HKCU\...\Run`,
-  с бэкапом в `fixer_backups/`)
-- `docker_prune` — `docker system prune -a` (для тех, у кого Docker съел
-  десятки гигабайт)
+- `disable_startup` — отключение записи автозагрузки
+  (только `HKCU\...\Run`, с бэкапом в `fixer_backups/`)
+- `docker_prune` — `docker system prune -a` (для тех, у кого Docker
+  съел десятки гигабайт)
 
 История всех прогонов и применений — в `fixer_log.jsonl`.
 
@@ -67,30 +75,30 @@
   ОС:        Windows 10 (AMD64)
   Python:    3.11.9
   CPU:       4 физ / 4 лог
-  RAM:       15.9 ГБ, занято 46.8%
-  CPU load:  63.3%
-  Swap:      3.3%
-  Аптайм:    2.4 ч
+  RAM:       15.9 ГБ, занято 47.2%
+  CPU load:  12.1%
+  Swap:      5.7%
+  Аптайм:    1.1 ч
 
 ── Диски ──
-  C:\  87.2% [█████████████████░░░]  96.6/110.8 ГБ  (NTFS)
-  D:\  87.3% [█████████████████░░░]  96.7/110.7 ГБ  (NTFS)
+  C:\  89.1% [█████████████████░░░]  98.7/110.8 ГБ  (NTFS)
+  D:\  90.6% [██████████████████░░]  100.3/110.7 ГБ  (NTFS)
 
 ── Здоровье дисков (SMART) ──
-  [0] ADATA SU650                    🟢 Healthy  (T=45°C, Wear=0%, POH=20640ч)
-  [1] ADATA SU650NS38                🟢 Healthy  (T=40°C, Wear=66%, POH=17173ч)
+  [0] ADATA SU650                    🟢 Healthy  (T=46°C, Wear=0%, POH=20654ч)
+  [1] ADATA SU650NS38                🟢 Healthy  (T=39°C, Wear=66%, POH=17186ч)
 
 ── Топ по RAM ──
-  Code.exe                        656.9 МБ  (PID 2596)
-  browser.exe                     427.3 МБ  (PID 8716)
+  Code.exe                        414.1 МБ  (PID 9240)
+  steamwebhelper.exe              405.6 МБ  (PID 14152)
   ...
 
 ── Сеть ──
   Интерфейс: Ethernet
   Шлюз:      192.168.0.1
-  DNS:       192.168.0.1
+  DNS:       8.8.8.8, 8.8.4.4
   Ping 192.168.0.1     4/4 (0.0% потерь, 0 мс)
-  Ping 8.8.8.8         4/4 (0.0% потерь, 67 мс)
+  Ping 8.8.8.8         4/4 (0.0% потерь, 71 мс)
 
 ── Найденные проблемы ──
 
@@ -98,11 +106,11 @@
      Осталось 34% ресурса записи.
      → Сделайте бэкап важных данных. Следите за Wear раз в месяц.
 
-  🟡 [СРЕДНИЙ] Диск C:\ заполнен на 87.2%
-     96.6/110.8 ГБ.
+  🟡 [СРЕДНИЙ] Диск C:\ заполнен на 89.1%
+     98.7/110.8 ГБ.
      → Освободите место заранее.
 
-  🟢 [НИЗКИЙ] Ошибки в Event Log за 24ч: 8
+  🟢 [НИЗКИЙ] Ошибки в Event Log за 24ч: 2
      Не критично, но стоит глянуть.
      → Смотрите event_errors.
 ```
@@ -110,6 +118,26 @@
 ---
 
 ## Установка
+
+### Вариант 1: Portable (без установки, рекомендуется для выездов)
+
+1. Скачайте `pc-diag-win64-portable.zip` из [Releases](https://github.com/progerman666/pc-diag/releases).
+2. Распакуйте в любую папку (например, на флешку).
+3. Запустите `pc-diag.exe --no-llm --fast`.
+
+Ничего не устанавливается в систему, не требует прав администратора.
+Размер распакованной папки — ~30 МБ.
+
+### Вариант 2: Установщик
+
+1. Скачайте `pc-diag-setup.exe` из [Releases](https://github.com/progerman666/pc-diag/releases).
+2. Запустите, пройдите мастер установки (потребуются права администратора).
+3. Запустите из меню «Пуск» или с рабочего стола.
+
+Устанавливается в `C:\Program Files\pc-diag`. Создаёт ярлыки, добавляет
+в «Установка и удаление программ» с деинсталлятором.
+
+### Вариант 3: Из исходников (для разработки)
 
 **Требования:** Windows 10/11, Python 3.11+.
 
@@ -139,16 +167,18 @@ copy .env.example .env
    OLLAMA_MODEL=qwen2.5:3b
    ```
 
-### Опционально: smartmontools (для SMART-деталей)
+### Опционально: smartmontools
 
-Если WMI не отдаёт `Wear`/`Temperature` для вашего диска — поставьте
-[smartmontools](https://www.smartmontools.org/):
+Если запускаете **из исходников** (не из готовой сборки) и WMI не отдаёт
+`Wear`/`Temperature` для вашего диска — поставьте smartmontools:
 
 ```powershell
 winget install smartmontools.smartmontools
 ```
 
-`pc-diag` автоматически использует `smartctl` как fallback.
+`pc-diag` автоматически использует `smartctl` как fallback. В готовой
+сборке (`portable` и `installer`) `smartctl.exe` уже встроен —
+устанавливать ничего не нужно.
 
 ---
 
@@ -157,11 +187,13 @@ winget install smartmontools.smartmontools
 ### Диагностика
 
 ```powershell
-python -m diag --no-llm --fast     # быстро: без LLM и без сканирования папок
-python -m diag --no-llm            # + размеры папок (медленнее на 30-60 с)
-python -m diag                     # + LLM-объяснение
-python -m diag --json report.json  # сохранить полный отчёт в JSON
+pc-diag.exe --no-llm --fast     # быстро: без LLM и без сканирования папок
+pc-diag.exe --no-llm            # + размеры папок (медленнее на 30-60 с)
+pc-diag.exe                     # + LLM-объяснение
+pc-diag.exe --json report.json  # сохранить полный отчёт в JSON
 ```
+
+Из исходников — то же самое через `python -m diag`.
 
 ### Fixer
 
@@ -174,6 +206,10 @@ python -m diag.fixer disable_startup --name OneDrive   # dry-run
 python -m diag.fixer disable_startup --name OneDrive --apply
 python -m diag.fixer --log                        # история действий
 ```
+
+**Внимание:** fixer доступен только из исходников (в готовой `.exe`-сборке
+он отключён — чтобы случайно не навредить системе клиента). Если нужен —
+запускайте из `python -m diag.fixer`.
 
 ---
 
@@ -193,6 +229,8 @@ python -m diag.fixer --log                        # история действ�
   PowerShell-команды. Только зарегистрированные в `ACTIONS`.
 - **`.env`, `fixer_log.jsonl`, `fixer_backups/` в `.gitignore`.**
   Личные данные не попадают в репозиторий.
+- **Готовая сборка не содержит fixer.** В `portable` и `installer`
+  доступна только диагностика — никаких изменений в системе.
 
 ---
 
@@ -207,9 +245,11 @@ pc-diag/
 │   ├── report.py        # форматирование отчёта
 │   ├── llm.py           # Ollama / Anthropic, только объяснения
 │   └── fixer.py         # безопасные исправления с dry-run и бэкапами
+├── run_diag.py          # точка входа для PyInstaller
 ├── .env.example
 ├── .gitignore
 ├── requirements.txt
+├── pc-diag.spec         # конфиг PyInstaller (генерируется)
 └── README.md
 ```
 
@@ -227,20 +267,49 @@ llm.explain(data, findings)   # опционально
 
 ---
 
+## Сборка `.exe` (для разработчиков)
+
+**Требования:** PyInstaller (`pip install pyinstaller`), smartmontools
+в `C:\Program Files\smartmontools\bin\`.
+
+**Portable (`--onedir`):**
+
+```powershell
+pyinstaller --name pc-diag --onedir --console --paths . ^
+  --add-binary "C:\Program Files\smartmontools\bin\smartctl.exe;smartctl" ^
+  --hidden-import psutil --hidden-import requests ^
+  --hidden-import dotenv --hidden-import anthropic ^
+  run_diag.py
+```
+
+Результат: `dist\pc-diag\` (папка ~30 МБ с `pc-diag.exe` и `_internal\`).
+
+**Установщик:** Inno Setup, скрипт `installer.iss` в корне проекта.
+Компиляция: `Build → Compile`, результат — `pc-diag-setup.exe`.
+
+---
+
 ## Ограничения
 
-- **Только Windows.** WMI, Event Log, `Get-PhysicalDisk` — Windows-only API.
-- **LLM не выполняет действий.** Даже при `LLM_BACKEND=ollama`, модель
-  только генерирует текст. Действия — только через `fixer` и только
-  с `--apply`.
-- **SMART зависит от контроллера.** Дешёвые SATA SSD (например, ADATA
-  SU650) иногда не отдают `Wear`/`Temperature` через WMI — тогда
-  используется `smartctl`, но и он может не увидеть диск через
+- **Только Windows.** WMI, Event Log, `Get-PhysicalDisk` —
+  Windows-only API. Linux/macOS не поддерживаются.
+- **LLM не выполняет действий.** Даже при `LLM_BACKEND=ollama`,
+  модель только генерирует текст. Действия — только через `fixer`
+  и только с `--apply`.
+- **SMART зависит от контроллера.** Дешёвые SATA SSD (например,
+  ADATA SU650) иногда не отдают `Wear`/`Temperature` через WMI —
+  тогда используется `smartctl`, но и он может не увидеть диск через
   USB-адаптер.
 - **Не заменяет полноценный антивирус / мониторинг.** Это диагностика,
   а не защита.
 - **Права администратора** нужны для `Get-StorageReliabilityCounter`
   и `smartctl`. Без них часть SMART-полей будет пустой.
+- **Антивирусные ложные срабатывания.** Свежесобранный PyInstaller
+  `.exe` иногда определяется как «подозрительный». Это нормально
+  для диагностических утилит. Добавьте в исключения или проверьте
+  на [VirusTotal](https://www.virustotal.com/).
+- **Только x64.** Сборка для 64-битной Windows 10/11. На 32-битной
+  не запустится.
 
 ---
 
@@ -252,6 +321,8 @@ llm.explain(data, findings)   # опционально
 - [x] Event Log с русскими уровнями
 - [x] Fixer: clean_temp, clean_recycle, disable_startup, docker_prune
 - [x] Локальная LLM через Ollama
+- [x] Сборка в `.exe` (PyInstaller, `--onedir`)
+- [x] Установщик (Inno Setup)
 - [ ] Windows Update: последние установленные, дата
 - [ ] Драйверы с ошибками (`Get-PnpDevice -Status ERROR`)
 - [ ] Температуры CPU/GPU (LibreHardwareMonitor)
@@ -275,3 +346,7 @@ MIT — см. [LICENSE](LICENSE).
 записей автозагрузки, `docker prune`. Перед `--apply` читайте dry-run.
 Автор не несёт ответственности за потерю данных, если вы применили
 действие без бэкапа.
+
+Готовая сборка (`portable` и `installer`) **не содержит fixer** —
+только диагностику. Это сделано специально, чтобы исключить
+случайное изменение системы клиента.
