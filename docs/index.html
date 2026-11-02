@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>pc-diag — диагностика Windows за 60 секунд</title>
-<meta name="description" content="Портативный диагностический инструмент для Windows: SMART-проверка дисков, Event Log, сеть, службы. Без установки, без интернета, read-only.">
-<meta property="og:title" content="pc-diag — диагностика Windows за 60 секунд">
-<meta property="og:description" content="SMART-проверка дисков, Event Log, сеть, службы. Без установки. Read-only.">
+<title>pc-diag вЂ” РґРёР°РіРЅРѕСЃС‚РёРєР° Windows Р·Р° 60 СЃРµРєСѓРЅРґ</title>
+<meta name="description" content="РџРѕСЂС‚Р°С‚РёРІРЅС‹Р№ РґРёР°РіРЅРѕСЃС‚РёС‡РµСЃРєРёР№ РёРЅСЃС‚СЂСѓРјРµРЅС‚ РґР»СЏ Windows: SMART-РїСЂРѕРІРµСЂРєР° РґРёСЃРєРѕРІ, Event Log, СЃРµС‚СЊ, СЃР»СѓР¶Р±С‹. Р‘РµР· СѓСЃС‚Р°РЅРѕРІРєРё, Р±РµР· РёРЅС‚РµСЂРЅРµС‚Р°, read-only.">
+<meta property="og:title" content="pc-diag вЂ” РґРёР°РіРЅРѕСЃС‚РёРєР° Windows Р·Р° 60 СЃРµРєСѓРЅРґ">
+<meta property="og:description" content="SMART-РїСЂРѕРІРµСЂРєР° РґРёСЃРєРѕРІ, Event Log, СЃРµС‚СЊ, СЃР»СѓР¶Р±С‹. Р‘РµР· СѓСЃС‚Р°РЅРѕРІРєРё. Read-only.">
 <meta property="og:image" content="https://progerman666.github.io/pc-diag/social-preview.png">
 <meta property="og:type" content="website">
 <style>
@@ -89,7 +89,7 @@
     color: #d0d0d0;
   }
   .safety li::before {
-    content: "✓";
+    content: "вњ“";
     position: absolute;
     left: 0;
     color: #6daa45;
@@ -135,7 +135,7 @@
         k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
     })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=113997678', 'ym');
 
-    ym(113997678, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    ym(113997678, 'init', {ssr:true, accurateTrackBounce:true, trackLinks:true});
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/113997678" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
@@ -146,34 +146,34 @@
 <header>
   <div class="container">
     <h1>pc-diag</h1>
-    <p class="tagline">Диагностика Windows за 60 секунд. Узнайте, почему тормозит компьютер, здоров ли диск и что в Event Log.</p>
+    <p class="tagline">Р”РёР°РіРЅРѕСЃС‚РёРєР° Windows Р·Р° 60 СЃРµРєСѓРЅРґ. РЈР·РЅР°Р№С‚Рµ, РїРѕС‡РµРјСѓ С‚РѕСЂРјРѕР·РёС‚ РєРѕРјРїСЊСЋС‚РµСЂ, Р·РґРѕСЂРѕРІ Р»Рё РґРёСЃРє Рё С‡С‚Рѕ РІ Event Log.</p>
     <div class="buttons">
-      <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-win64-portable.zip" class="btn btn-primary">Скачать portable (16 МБ)</a>
-      <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-setup.exe" class="btn btn-secondary">Скачать установщик (15 МБ)</a>
+      <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-win64-portable.zip" class="btn btn-primary">РЎРєР°С‡Р°С‚СЊ portable (16 РњР‘)</a>
+      <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-setup.exe" class="btn btn-secondary">РЎРєР°С‡Р°С‚СЊ СѓСЃС‚Р°РЅРѕРІС‰РёРє (15 РњР‘)</a>
     </div>
-    <p class="hint">Windows 10/11 x64 · без установки · без интернета · read-only</p>
+    <p class="hint">Windows 10/11 x64 В· Р±РµР· СѓСЃС‚Р°РЅРѕРІРєРё В· Р±РµР· РёРЅС‚РµСЂРЅРµС‚Р° В· read-only</p>
   </div>
 </header>
 
 <section>
   <div class="container">
-    <h2>Что показывает</h2>
+    <h2>Р§С‚Рѕ РїРѕРєР°Р·С‹РІР°РµС‚</h2>
     <div class="features">
       <div class="feature">
-        <h3>💾 Здоровье дисков (SMART)</h3>
-        <p>Износ SSD, температура, наработка, предсказание отказа. То, что не видно в Проводнике.</p>
+        <h3>рџ’ѕ Р—РґРѕСЂРѕРІСЊРµ РґРёСЃРєРѕРІ (SMART)</h3>
+        <p>РР·РЅРѕСЃ SSD, С‚РµРјРїРµСЂР°С‚СѓСЂР°, РЅР°СЂР°Р±РѕС‚РєР°, РїСЂРµРґСЃРєР°Р·Р°РЅРёРµ РѕС‚РєР°Р·Р°. РўРѕ, С‡С‚Рѕ РЅРµ РІРёРґРЅРѕ РІ РџСЂРѕРІРѕРґРЅРёРєРµ.</p>
       </div>
       <div class="feature">
-        <h3>📋 Event Log</h3>
-        <p>Ошибки и критические события за 24 часа, с русскими названиями уровней.</p>
+        <h3>рџ“‹ Event Log</h3>
+        <p>РћС€РёР±РєРё Рё РєСЂРёС‚РёС‡РµСЃРєРёРµ СЃРѕР±С‹С‚РёСЏ Р·Р° 24 С‡Р°СЃР°, СЃ СЂСѓСЃСЃРєРёРјРё РЅР°Р·РІР°РЅРёСЏРјРё СѓСЂРѕРІРЅРµР№.</p>
       </div>
       <div class="feature">
-        <h3>🌐 Сеть</h3>
-        <p>Шлюз, DNS, потери пакетов, пинг до 8.8.8.8. Понятно, где проблема — в роутере или у провайдера.</p>
+        <h3>рџЊђ РЎРµС‚СЊ</h3>
+        <p>РЁР»СЋР·, DNS, РїРѕС‚РµСЂРё РїР°РєРµС‚РѕРІ, РїРёРЅРі РґРѕ 8.8.8.8. РџРѕРЅСЏС‚РЅРѕ, РіРґРµ РїСЂРѕР±Р»РµРјР° вЂ” РІ СЂРѕСѓС‚РµСЂРµ РёР»Рё Сѓ РїСЂРѕРІР°Р№РґРµСЂР°.</p>
       </div>
       <div class="feature">
-        <h3>⚙️ Система</h3>
-        <p>CPU, RAM, топ процессов, остановленные службы, автозагрузка, крупные папки.</p>
+        <h3>вљ™пёЏ РЎРёСЃС‚РµРјР°</h3>
+        <p>CPU, RAM, С‚РѕРї РїСЂРѕС†РµСЃСЃРѕРІ, РѕСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Рµ СЃР»СѓР¶Р±С‹, Р°РІС‚РѕР·Р°РіСЂСѓР·РєР°, РєСЂСѓРїРЅС‹Рµ РїР°РїРєРё.</p>
       </div>
     </div>
   </div>
@@ -181,53 +181,53 @@
 
 <section class="safety">
   <div class="container">
-    <h2>Почему безопасно</h2>
+    <h2>РџРѕС‡РµРјСѓ Р±РµР·РѕРїР°СЃРЅРѕ</h2>
     <ul>
-      <li>Read-only: только читает данные, ничего не меняет</li>
-      <li>Открытый код: <a href="https://github.com/progerman666/pc-diag">github.com/progerman666/pc-diag</a></li>
-      <li>Portable: не требует установки и прав администратора</li>
-      <li>Работает офлайн: без интернета и API-ключей</li>
-      <li>Не содержит fixer — никаких изменений в системе</li>
+      <li>Read-only: С‚РѕР»СЊРєРѕ С‡РёС‚Р°РµС‚ РґР°РЅРЅС‹Рµ, РЅРёС‡РµРіРѕ РЅРµ РјРµРЅСЏРµС‚</li>
+      <li>РћС‚РєСЂС‹С‚С‹Р№ РєРѕРґ: <a href="https://github.com/progerman666/pc-diag">github.com/progerman666/pc-diag</a></li>
+      <li>Portable: РЅРµ С‚СЂРµР±СѓРµС‚ СѓСЃС‚Р°РЅРѕРІРєРё Рё РїСЂР°РІ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°</li>
+      <li>Р Р°Р±РѕС‚Р°РµС‚ РѕС„Р»Р°Р№РЅ: Р±РµР· РёРЅС‚РµСЂРЅРµС‚Р° Рё API-РєР»СЋС‡РµР№</li>
+      <li>РќРµ СЃРѕРґРµСЂР¶РёС‚ fixer вЂ” РЅРёРєР°РєРёС… РёР·РјРµРЅРµРЅРёР№ РІ СЃРёСЃС‚РµРјРµ</li>
     </ul>
   </div>
 </section>
 
 <section>
   <div class="container">
-    <h2>Пример отчёта</h2>
-    <div class="screenshot"><span class="dim">────────────────────────────────────────────</span>
-  ДИАГНОСТИКА: DESKTOP-XXXXXXX
-<span class="dim">────────────────────────────────────────────</span>
-  ОС:        Windows 10 (AMD64)
-  CPU:       4 физ / 4 лог
-  RAM:       15.9 ГБ, занято 47.2%
+    <h2>РџСЂРёРјРµСЂ РѕС‚С‡С‘С‚Р°</h2>
+    <div class="screenshot"><span class="dim">в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ</span>
+  Р”РРђР“РќРћРЎРўРРљРђ: DESKTOP-XXXXXXX
+<span class="dim">в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ</span>
+  РћРЎ:        Windows 10 (AMD64)
+  CPU:       4 С„РёР· / 4 Р»РѕРі
+  RAM:       15.9 Р“Р‘, Р·Р°РЅСЏС‚Рѕ 47.2%
 
-<span class="dim">── Диски ──</span>
-  C:\  89.1% [█████████████████░░░]  98.7/110.8 ГБ
-  D:\  90.6% [██████████████████░░]  100.3/110.7 ГБ
+<span class="dim">в”Ђв”Ђ Р”РёСЃРєРё в”Ђв”Ђ</span>
+  C:\  89.1% [в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–‘в–‘в–‘]  98.7/110.8 Р“Р‘
+  D:\  90.6% [в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–€в–‘в–‘]  100.3/110.7 Р“Р‘
 
-<span class="dim">── Здоровье дисков (SMART) ──</span>
-  [0] ADATA SU650       <span class="green">🟢 Healthy</span>  (T=46°C, Wear=0%, POH=20654ч)
-  [1] ADATA SU650NS38   <span class="green">🟢 Healthy</span>  (T=39°C, Wear=66%, POH=17186ч)
+<span class="dim">в”Ђв”Ђ Р—РґРѕСЂРѕРІСЊРµ РґРёСЃРєРѕРІ (SMART) в”Ђв”Ђ</span>
+  [0] ADATA SU650       <span class="green">рџџў Healthy</span>  (T=46В°C, Wear=0%, POH=20654С‡)
+  [1] ADATA SU650NS38   <span class="green">рџџў Healthy</span>  (T=39В°C, Wear=66%, POH=17186С‡)
 
-<span class="dim">── Найденные проблемы ──</span>
-  <span class="yellow">🟡 [СРЕДНИЙ] SSD ADATA SU650NS38 изношен на 66%</span>
-     Осталось 34% ресурса записи.
-     → Сделайте бэкап важных данных.
+<span class="dim">в”Ђв”Ђ РќР°Р№РґРµРЅРЅС‹Рµ РїСЂРѕР±Р»РµРјС‹ в”Ђв”Ђ</span>
+  <span class="yellow">рџџЎ [РЎР Р•Р”РќРР™] SSD ADATA SU650NS38 РёР·РЅРѕС€РµРЅ РЅР° 66%</span>
+     РћСЃС‚Р°Р»РѕСЃСЊ 34% СЂРµСЃСѓСЂСЃР° Р·Р°РїРёСЃРё.
+     в†’ РЎРґРµР»Р°Р№С‚Рµ Р±СЌРєР°Рї РІР°Р¶РЅС‹С… РґР°РЅРЅС‹С….
 
-  <span class="yellow">🟡 [СРЕДНИЙ] Диск C:\ заполнен на 89.1%</span>
-     → Освободите место заранее.</div>
+  <span class="yellow">рџџЎ [РЎР Р•Р”РќРР™] Р”РёСЃРє C:\ Р·Р°РїРѕР»РЅРµРЅ РЅР° 89.1%</span>
+     в†’ РћСЃРІРѕР±РѕРґРёС‚Рµ РјРµСЃС‚Рѕ Р·Р°СЂР°РЅРµРµ.</div>
   </div>
 </section>
 
 <footer>
   <div class="container">
     <p>
-      <a href="https://github.com/progerman666/pc-diag">GitHub</a> ·
-      <a href="https://github.com/progerman666/pc-diag/releases">Releases</a> ·
+      <a href="https://github.com/progerman666/pc-diag">GitHub</a> В·
+      <a href="https://github.com/progerman666/pc-diag/releases">Releases</a> В·
       <a href="https://github.com/progerman666/pc-diag/blob/main/LICENSE">MIT License</a>
     </p>
-    <p style="margin-top: 12px;">Сделано с ❤ для тех, кто чинит компьютеры</p>
+    <p style="margin-top: 12px;">РЎРґРµР»Р°РЅРѕ СЃ вќ¤ РґР»СЏ С‚РµС…, РєС‚Рѕ С‡РёРЅРёС‚ РєРѕРјРїСЊСЋС‚РµСЂС‹</p>
   </div>
 </footer>
 
