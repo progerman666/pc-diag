@@ -7,7 +7,7 @@
 <meta name="description" content="Портативный диагностический инструмент для Windows: SMART-проверка дисков, Event Log, сеть, службы. Без установки, без интернета, read-only.">
 <meta property="og:title" content="pc-diag — диагностика Windows за 60 секунд">
 <meta property="og:description" content="SMART-проверка дисков, Event Log, сеть, службы. Без установки. Read-only.">
-<meta property="og:image" content="https://progerman666.github.io/pc-diag/social-preview.png">
+<meta property="og:image" content="https://pc-diag.ru/social-preview.png">
 <meta property="og:type" content="website">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,14 +39,14 @@
   }
   .buttons {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 24px;
   }
   .btn {
     display: inline-block;
-    padding: 14px 28px;
+    padding: 14px 24px;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 600;
@@ -56,6 +56,9 @@
   .btn:hover { transform: translateY(-2px); opacity: 0.9; }
   .btn-primary { background: #6daa45; color: #fff; }
   .btn-secondary { background: #2d2d2d; color: #e5e5e5; border: 1px solid #444; }
+  .btn-telegram { background: #229ED9; color: #fff; }
+  .btn-telegram:hover { background: #1c8ec5; }
+  
   .hint { font-size: 13px; color: #888; margin-top: 8px; }
   section { padding: 60px 0; border-bottom: 1px solid #333; }
   h2 {
@@ -150,6 +153,7 @@
     <div class="buttons">
       <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-win64-portable.zip" class="btn btn-primary">Скачать portable (16 МБ)</a>
       <a href="https://github.com/progerman666/pc-diag/releases/latest/download/pc-diag-setup.exe" class="btn btn-secondary">Скачать установщик (15 МБ)</a>
+      <a href="https://t.me/remont_teh_ru" class="btn btn-telegram" target="_blank" rel="noopener">📢 Наш Telegram</a>
     </div>
     <p class="hint">Windows 10/11 x64 · без установки · без интернета · read-only</p>
   </div>
@@ -187,7 +191,7 @@
       <li>Открытый код: <a href="https://github.com/progerman666/pc-diag">github.com/progerman666/pc-diag</a></li>
       <li>Portable: не требует установки и прав администратора</li>
       <li>Работает офлайн: без интернета и API-ключей</li>
-      <li>Не содержит fixer — никаких изменений в системе</li>
+      <li>Имеет встроенную безопасную очистку кэша (TEMP, pip, VSCode)</li>
     </ul>
   </div>
 </section>
@@ -225,7 +229,12 @@
     <p>
       <a href="https://github.com/progerman666/pc-diag">GitHub</a> ·
       <a href="https://github.com/progerman666/pc-diag/releases">Releases</a> ·
+      <a href="https://t.me/remont_teh_ru">Telegram</a> ·
       <a href="https://github.com/progerman666/pc-diag/blob/main/LICENSE">MIT License</a>
+    </p>
+    <p style="margin-top: 12px; font-size: 13px; color: #888;">
+      Связь: <a href="https://t.me/remont_teh_ru">Telegram-канал</a> · 
+      Email: contact [собака] pc-diag.ru
     </p>
     <p style="margin-top: 12px;">Сделано с ❤ для тех, кто чинит компьютеры</p>
   </div>
