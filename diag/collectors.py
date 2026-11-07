@@ -5,6 +5,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,20 +22,17 @@ LEVEL_RU = {
 
 
 def _find_smartctl() -> str:
-    """Ищет smartctl в нескольких местах:
-    1. рядом с папкой diag (../smartctl/smartctl.exe) — для портативной версии
-    2. в текущей рабочей папке (smartctl/smartctl.exe)
-    3. в стандартном месте установки smartmontools
-    4. в PATH
-    """
+    """Ищет smartctl в нескольких местах."""
     candidates = [
         Path(__file__).parent.parent / "smartctl" / "smartctl.exe",
         Path.cwd() / "smartctl" / "smartctl.exe",
+        Path(sys.executable).parent / "smartctl" / "smartctl.exe"
+        if hasattr(sys, "executable") else None,
         Path(r"C:\Program Files\smartmontools\bin\smartctl.exe"),
         Path(r"C:\Program Files (x86)\smartmontools\bin\smartctl.exe"),
     ]
     for p in candidates:
-        if p.exists():
+        if p is not None and p.exists():
             return str(p)
     return shutil.which("smartctl") or ""
 
@@ -53,13 +51,18 @@ def _run(cmd: list[str], timeout: int = 10) -> str:
                 )
                 break
     try:
-        out = subprocess.run(cmd, capture_output=True, timeout=timeout)
+        out = subprocess.run(
+            cmd, capture_output=True, timeout=timeout,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
         for enc in ("utf-8", "cp866", "cp1251"):
             try:
                 return out.stdout.decode(enc).strip()
             except UnicodeDecodeError:
                 continue
         return out.stdout.decode("utf-8", errors="replace").strip()
+    except subprocess.TimeoutExpired:
+        return "[error: timeout]"
     except Exception as e:
         return f"[error: {e}]"
 
@@ -139,14 +142,13 @@ def get_disks() -> list[dict]:
 
 
 def _smartctl_scan() -> dict:
-    """Возвращает {device_id: '/dev/sda' или '/dev/pd0'}.
-    Использует smartctl --scan для маппинга индексов на устройства."""
     if not SMARTCTL or not os.path.exists(SMARTCTL):
         return {}
     try:
         r = subprocess.run(
             [SMARTCTL, "--scan"],
             capture_output=True, timeout=15,
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
         text = r.stdout.decode("utf-8", errors="replace")
     except Exception:
@@ -165,13 +167,13 @@ def _smartctl_scan() -> dict:
 
 
 def _smartctl_query(device: str) -> dict:
-    """Запрашивает smartctl -a -j <device>, парсит ключевые поля."""
     if not SMARTCTL or not os.path.exists(SMARTCTL) or not device:
         return {}
     try:
         r = subprocess.run(
             [SMARTCTL, "-a", "-j", device],
             capture_output=True, timeout=30,
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
         if r.returncode not in (0, 1, 2, 4, 8):
             return {}
@@ -238,8 +240,6 @@ def _smartctl_query(device: str) -> dict:
 
 
 def get_disk_health() -> list[dict]:
-    """SMART-статус физических дисков.
-    Источники: WMI (Get-PhysicalDisk), PredictFailure, smartctl (fallback)."""
     ps_base = (
         "Get-PhysicalDisk | Select-Object FriendlyName, MediaType, "
         "HealthStatus, OperationalStatus, DeviceId | ConvertTo-Json -Compress"
@@ -350,7 +350,6 @@ def get_disk_health() -> list[dict]:
 
 
 def get_startup_details() -> list[dict]:
-    """Автозагрузка: имя, команда, путь, пользователь."""
     ps = (
         "Get-CimInstance Win32_StartupCommand | "
         "Select-Object Name, Command, Location, User | "
@@ -403,11 +402,11 @@ def get_event_errors(last_hours: int = 24, limit: int = 20) -> list[str]:
 
 
 def _ping(host: str, count: int = 4) -> dict:
-    """Пинг через системный ping. Возвращает потери и средний RTT."""
     try:
         result = subprocess.run(
             ["ping", "-n", str(count), "-w", "1000", host],
             capture_output=True, timeout=30,
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
         output = None
         for enc in ("cp866", "cp1251", "utf-8"):
@@ -432,7 +431,6 @@ def _ping(host: str, count: int = 4) -> dict:
 
 
 def get_network() -> dict:
-    """Шлюз, DNS и пинг до шлюза и 8.8.8.8."""
     ps = (
         "$cfg = Get-NetIPConfiguration | "
         "Where-Object {$_.IPv4DefaultGateway -ne $null} | Select-Object -First 1; "
@@ -469,11 +467,10 @@ def get_network() -> dict:
 
 
 def get_folder_sizes(top_n: int = 20) -> list[dict]:
-    """Топ папок в домашней директории по размеру.
-    Может занять 30-60 сек на большом профиле."""
     ps = (
         "$dirs = Get-ChildItem $env:USERPROFILE -Directory -Force "
-        "-ErrorAction SilentlyContinue; "
+        "-ErrorAction SilentlyContinue | "
+        "Where-Object { $_.Name -notin @('OneDrive','AppData','.ollama','.docker','.vscode') }; "
         "$result = foreach ($d in $dirs) { "
         "$size = (Get-ChildItem $d.FullName -Recurse -File -Force "
         "-ErrorAction SilentlyContinue | "
@@ -483,7 +480,7 @@ def get_folder_sizes(top_n: int = 20) -> list[dict]:
         f"$result | Sort-Object Bytes -Descending | Select-Object -First {top_n} | "
         "ConvertTo-Json -Compress"
     )
-    raw = _run(["powershell", "-NoProfile", "-Command", ps], timeout=180)
+    raw = _run(["powershell", "-NoProfile", "-Command", ps], timeout=60)
     if not raw or raw.startswith("[error") or raw == "null":
         return []
     try:
@@ -499,7 +496,6 @@ def get_folder_sizes(top_n: int = 20) -> list[dict]:
 
 
 def get_services_errors() -> list[dict]:
-    """Службы с типом запуска Automatic, которые не Running."""
     ps = (
         "Get-Service | Where-Object { $_.StartType -eq 'Automatic' "
         "-and $_.Status -ne 'Running' } | "
@@ -525,8 +521,7 @@ def get_services_errors() -> list[dict]:
         return []
 
 
-def collect_all(skip_slow: bool = False) -> dict:
-    """skip_slow=True пропускает get_folder_sizes (медленный, 30-60 сек)."""
+def collect_all(skip_slow: bool = True) -> dict:
     data = {
         "system": get_system_info(),
         "load": get_cpu_ram(),

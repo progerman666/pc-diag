@@ -1,4 +1,8 @@
-"""python -m diag [--no-llm] [--fast] [--json out.json]"""
+"""python -m diag [--no-llm] [--slow] [--json out.json]
+
+По умолчанию — быстрый режим (без сканирования папок, 30-60 сек).
+--slow включает сканирование размеров папок (может занять 1-3 мин).
+"""
 import argparse
 import json
 import sys
@@ -24,8 +28,8 @@ def main() -> int:
         help="Не обращаться к LLM, только правила и данные",
     )
     ap.add_argument(
-        "--fast", action="store_true",
-        help="Пропустить сканирование папок (быстрее на 30-60 сек)",
+        "--slow", action="store_true",
+        help="Включить сканирование размеров папок (медленно, 1-3 мин)",
     )
     ap.add_argument(
         "--json", type=str, default=None, metavar="FILE",
@@ -34,9 +38,9 @@ def main() -> int:
     args = ap.parse_args()
 
     print("Собираю данные (это занимает несколько секунд)...")
-    if not args.fast:
+    if args.slow:
         print("  Сканирую размеры папок — может занять до минуты...")
-    data = collect_all(skip_slow=args.fast)
+    data = collect_all(skip_slow=not args.slow)
     findings = check(data)
 
     llm_text = None

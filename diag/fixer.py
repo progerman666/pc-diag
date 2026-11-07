@@ -1,18 +1,4 @@
-"""Безопасные исправления системы.
-
-Каждое действие:
-1. Сначала dry-run — показывает, что будет сделано.
-2. Требует явного --apply и подтверждения y/N.
-3. Логируется в fixer_log.jsonl.
-4. Для disable_startup — бэкап в fixer_backups/.
-
-Использование:
-    python -m diag.fixer --list
-    python -m diag.fixer clean_temp              # dry-run
-    python -m diag.fixer clean_temp --apply      # применить
-    python -m diag.fixer disable_startup --name OneDrive --apply
-    python -m diag.fixer --log
-"""
+"""Безопасные исправления системы."""
 import argparse
 import json
 import os
@@ -28,8 +14,6 @@ BACKUP_DIR = Path("fixer_backups")
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 
-# ─── Утилиты ──────────────────────────────────────────────────────────
-
 def _human(n: int) -> str:
     for unit in ("Б", "КБ", "МБ", "ГБ"):
         if n < 1024:
@@ -44,6 +28,7 @@ def _run_ps(cmd: str, timeout: int = 60) -> tuple[str, int]:
         r = subprocess.run(
             ["powershell", "-NoProfile", "-Command", full],
             capture_output=True, timeout=timeout,
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
         out = None
         for enc in ("utf-8", "cp866", "cp1251"):
@@ -69,7 +54,51 @@ def _log(action: str, args: dict, result: dict, applied: bool):
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-# ─── clean_temp ───────────────────────────────────────────────────────
+def _is_process_running(exe_name: str) -> bool:
+    try:
+        r = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {exe_name}", "/NH"],
+            capture_output=True, timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        out = r.stdout.decode("cp866", errors="replace")
+        return exe_name.lower() in out.lower()
+    except Exception:
+        return False
+
+
+def _dir_stats(path: Path) -> tuple[int, int]:
+    if not path.exists():
+        return 0, 0
+    count, size = 0, 0
+    try:
+        for f in path.rglob("*"):
+            try:
+                if f.is_file():
+                    size += f.stat().st_size
+                    count += 1
+            except (PermissionError, OSError):
+                continue
+    except (PermissionError, OSError):
+        pass
+    return count, size
+
+
+def _dir_clean(path: Path) -> tuple[int, int, int]:
+    freed, deleted, failed = 0, 0, 0
+    if not path.exists():
+        return 0, 0, 0
+    for f in path.rglob("*"):
+        try:
+            if f.is_file():
+                size = f.stat().st_size
+                f.unlink()
+                freed += size
+                deleted += 1
+        except (PermissionError, OSError):
+            failed += 1
+    return deleted, failed, freed
+
 
 def _temp_dirs() -> list[Path]:
     dirs = []
@@ -86,15 +115,9 @@ def _scan_temp() -> dict:
     items = 0
     total = 0
     for d in _temp_dirs():
-        if not d.exists():
-            continue
-        for f in d.rglob("*"):
-            try:
-                if f.is_file():
-                    total += f.stat().st_size
-                    items += 1
-            except (PermissionError, OSError):
-                continue
+        c, s = _dir_stats(d)
+        items += c
+        total += s
     return {"files": items, "bytes": total}
 
 
@@ -116,22 +139,12 @@ def clean_temp_apply() -> dict:
     deleted = 0
     failed = 0
     for d in _temp_dirs():
-        if not d.exists():
-            continue
-        for f in d.rglob("*"):
-            try:
-                if not f.is_file():
-                    continue
-                size = f.stat().st_size
-                f.unlink()
-                freed += size
-                deleted += 1
-            except (PermissionError, OSError):
-                failed += 1
+        dl, fl, fr = _dir_clean(d)
+        deleted += dl
+        failed += fl
+        freed += fr
     return {"deleted": deleted, "failed": failed, "freed_bytes": freed}
 
-
-# ─── clean_recycle ────────────────────────────────────────────────────
 
 def clean_recycle_dry() -> dict:
     ps = (
@@ -161,7 +174,125 @@ def clean_recycle_apply() -> dict:
     return {"done": True}
 
 
-# ─── disable_startup ──────────────────────────────────────────────────
+def _pip_cache_path() -> Path:
+    return Path(os.environ.get("LOCALAPPDATA", "")) / "pip" / "cache"
+
+
+def clean_pip_cache_dry() -> dict:
+    path = _pip_cache_path()
+    if not path.exists():
+        return {"detail": f"Папка не найдена: {path}", "error": "not_found"}
+    count, size = _dir_stats(path)
+    return {
+        "detail": (
+            f"Найдено {count} файлов на {_human(size)} в {path}.\n"
+            f"Это кэш скачанных пакетов pip — при следующей установке "
+            f"pip скачает их заново (при наличии интернета)."
+        ),
+        "size_bytes": size,
+    }
+
+
+def clean_pip_cache_apply() -> dict:
+    path = _pip_cache_path()
+    deleted, failed, freed = _dir_clean(path)
+    return {"deleted": deleted, "failed": failed, "freed_bytes": freed}
+
+
+def _vscode_cache_paths() -> list[Path]:
+    appdata = Path(os.environ.get("APPDATA", ""))
+    return [
+        appdata / "Code" / "Cache",
+        appdata / "Code" / "CachedData",
+        appdata / "Code" / "GPUCache",
+        appdata / "Code" / "Code Cache",
+    ]
+
+
+def clean_vscode_cache_dry() -> dict:
+    if _is_process_running("Code.exe"):
+        return {
+            "detail": "❌ VSCode запущен. Закройте его и повторите.",
+            "error": "vscode_running",
+        }
+    total_count = 0
+    total_size = 0
+    existing = []
+    for p in _vscode_cache_paths():
+        if p.exists():
+            c, s = _dir_stats(p)
+            total_count += c
+            total_size += s
+            existing.append(str(p))
+    if not existing:
+        return {"detail": "Кэш VSCode не найден.", "error": "not_found"}
+    return {
+        "detail": (
+            f"Найдено {total_count} файлов на {_human(total_size)}.\n"
+            f"Папки:\n  " + "\n  ".join(existing) + "\n"
+            f"Это кэш VSCode — при следующем запуске он соберётся заново."
+        ),
+        "size_bytes": total_size,
+    }
+
+
+def clean_vscode_cache_apply() -> dict:
+    if _is_process_running("Code.exe"):
+        return {"error": "vscode_running", "detail": "VSCode запущен."}
+    total_deleted = 0
+    total_failed = 0
+    total_freed = 0
+    for p in _vscode_cache_paths():
+        dl, fl, fr = _dir_clean(p)
+        total_deleted += dl
+        total_failed += fl
+        total_freed += fr
+    return {
+        "deleted": total_deleted,
+        "failed": total_failed,
+        "freed_bytes": total_freed,
+    }
+
+
+def _thumbcache_dir() -> Path:
+    return (
+        Path(os.environ.get("LOCALAPPDATA", ""))
+        / "Microsoft" / "Windows" / "Explorer"
+    )
+
+
+def clean_thumbnail_cache_dry() -> dict:
+    d = _thumbcache_dir()
+    if not d.exists():
+        return {"detail": f"Папка не найдена: {d}", "error": "not_found"}
+    files = list(d.glob("thumbcache_*.db"))
+    if not files:
+        return {"detail": "Файлы thumbcache_*.db не найдены.", "error": "not_found"}
+    size = sum(f.stat().st_size for f in files if f.exists())
+    return {
+        "detail": (
+            f"Найдено {len(files)} файлов thumbcache на {_human(size)}.\n"
+            f"Это кэш эскизов Проводника — он пересоберётся при просмотре папок."
+        ),
+        "size_bytes": size,
+    }
+
+
+def clean_thumbnail_cache_apply() -> dict:
+    d = _thumbcache_dir()
+    deleted = 0
+    failed = 0
+    freed = 0
+    for f in d.glob("thumbcache_*.db"):
+        try:
+            size = f.stat().st_size
+            f.unlink()
+            freed += size
+            deleted += 1
+        except (PermissionError, OSError):
+            failed += 1
+    return {"deleted": deleted, "failed": failed, "freed_bytes": freed}
+
 
 def _get_startup_entries() -> list[dict]:
     ps = (
@@ -182,7 +313,6 @@ def _get_startup_entries() -> list[dict]:
 
 
 def _find_run_entry(name: str):
-    """Ищет запись в HKCU\\...\\Run. Возвращает (name, command) или None."""
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY, 0,
                              winreg.KEY_READ)
@@ -265,12 +395,12 @@ def disable_startup_apply(name: str) -> dict:
     return {"deleted": hkcu[0], "backup": str(backup_file)}
 
 
-# ─── docker_prune ─────────────────────────────────────────────────────
-
 def _docker_available() -> bool:
     try:
-        r = subprocess.run(["docker", "--version"], capture_output=True,
-                           timeout=10)
+        r = subprocess.run(
+            ["docker", "--version"], capture_output=True, timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
         return r.returncode == 0
     except Exception:
         return False
@@ -281,8 +411,11 @@ def docker_prune_dry() -> dict:
         return {"detail": "Docker не установлен или не в PATH.",
                 "error": "no_docker"}
     try:
-        r = subprocess.run(["docker", "system", "df"],
-                           capture_output=True, timeout=30)
+        r = subprocess.run(
+            ["docker", "system", "df"],
+            capture_output=True, timeout=30,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
         out = r.stdout.decode("utf-8", errors="replace")
     except Exception as e:
         return {"detail": f"Ошибка docker: {e}", "error": "docker_error"}
@@ -298,14 +431,15 @@ def docker_prune_dry() -> dict:
 
 def docker_prune_apply() -> dict:
     try:
-        r = subprocess.run(["docker", "system", "prune", "-a", "-f"],
-                           capture_output=True, timeout=300)
+        r = subprocess.run(
+            ["docker", "system", "prune", "-a", "-f"],
+            capture_output=True, timeout=300,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
         return {"output": r.stdout.decode("utf-8", errors="replace")}
     except Exception as e:
         return {"error": str(e)}
 
-
-# ─── Реестр действий ──────────────────────────────────────────────────
 
 ACTIONS = {
     "clean_temp": {
@@ -317,6 +451,21 @@ ACTIONS = {
         "title": "Очистка корзины",
         "risk": "low", "needs_name": False,
         "dry": clean_recycle_dry, "apply": clean_recycle_apply,
+    },
+    "clean_pip_cache": {
+        "title": "Очистка кэша pip",
+        "risk": "low", "needs_name": False,
+        "dry": clean_pip_cache_dry, "apply": clean_pip_cache_apply,
+    },
+    "clean_vscode_cache": {
+        "title": "Очистка кэша VSCode",
+        "risk": "low", "needs_name": False,
+        "dry": clean_vscode_cache_dry, "apply": clean_vscode_cache_apply,
+    },
+    "clean_thumbnail_cache": {
+        "title": "Очистка кэша эскизов Windows",
+        "risk": "low", "needs_name": False,
+        "dry": clean_thumbnail_cache_dry, "apply": clean_thumbnail_cache_apply,
     },
     "disable_startup": {
         "title": "Отключение записи автозагрузки",
@@ -331,12 +480,10 @@ ACTIONS = {
 }
 
 
-# ─── CLI ──────────────────────────────────────────────────────────────
-
 def cmd_list():
     print("\nДоступные действия:\n")
     for key, a in ACTIONS.items():
-        print(f"  {key:<18} [{a['risk'].upper():<6}]  {a['title']}")
+        print(f"  {key:<22} [{a['risk'].upper():<6}]  {a['title']}")
     print(f"\nИспользование: python -m diag.fixer <action> [--apply] "
           f"[--name NAME]\n")
 
