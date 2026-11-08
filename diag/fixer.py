@@ -1,4 +1,4 @@
-"""Безопасные исправления системы."""
+﻿"""Р‘РµР·РѕРїР°СЃРЅС‹Рµ РёСЃРїСЂР°РІР»РµРЅРёСЏ СЃРёСЃС‚РµРјС‹."""
 import argparse
 import json
 import os
@@ -15,11 +15,11 @@ RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 
 def _human(n: int) -> str:
-    for unit in ("Б", "КБ", "МБ", "ГБ"):
+    for unit in ("Р‘", "РљР‘", "РњР‘", "Р“Р‘"):
         if n < 1024:
             return f"{n:.1f} {unit}"
         n /= 1024
-    return f"{n:.1f} ТБ"
+    return f"{n:.1f} РўР‘"
 
 
 def _run_ps(cmd: str, timeout: int = 60) -> tuple[str, int]:
@@ -125,10 +125,10 @@ def clean_temp_dry() -> dict:
     scan = _scan_temp()
     return {
         "detail": (
-            f"Найдено {scan['files']} файлов на {_human(scan['bytes'])}. "
-            f"Будут удалены файлы, доступные на запись. "
-            f"Занятые (запущенные программы) — пропущены.\n"
-            f"Папки: {', '.join(str(d) for d in _temp_dirs())}"
+            f"РќР°Р№РґРµРЅРѕ {scan['files']} С„Р°Р№Р»РѕРІ РЅР° {_human(scan['bytes'])}. "
+            f"Р‘СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹ С„Р°Р№Р»С‹, РґРѕСЃС‚СѓРїРЅС‹Рµ РЅР° Р·Р°РїРёСЃСЊ. "
+            f"Р—Р°РЅСЏС‚С‹Рµ (Р·Р°РїСѓС‰РµРЅРЅС‹Рµ РїСЂРѕРіСЂР°РјРјС‹) вЂ” РїСЂРѕРїСѓС‰РµРЅС‹.\n"
+            f"РџР°РїРєРё: {', '.join(str(d) for d in _temp_dirs())}"
         ),
         "size_bytes": scan["bytes"],
     }
@@ -164,7 +164,7 @@ def clean_recycle_dry() -> dict:
         except Exception:
             pass
     return {
-        "detail": f"В корзине {count} объектов, всего {_human(size)}.",
+        "detail": f"Р’ РєРѕСЂР·РёРЅРµ {count} РѕР±СЉРµРєС‚РѕРІ, РІСЃРµРіРѕ {_human(size)}.",
         "size_bytes": size,
     }
 
@@ -181,13 +181,13 @@ def _pip_cache_path() -> Path:
 def clean_pip_cache_dry() -> dict:
     path = _pip_cache_path()
     if not path.exists():
-        return {"detail": f"Папка не найдена: {path}", "error": "not_found"}
+        return {"detail": f"РџР°РїРєР° РЅРµ РЅР°Р№РґРµРЅР°: {path}", "error": "not_found"}
     count, size = _dir_stats(path)
     return {
         "detail": (
-            f"Найдено {count} файлов на {_human(size)} в {path}.\n"
-            f"Это кэш скачанных пакетов pip — при следующей установке "
-            f"pip скачает их заново (при наличии интернета)."
+            f"РќР°Р№РґРµРЅРѕ {count} С„Р°Р№Р»РѕРІ РЅР° {_human(size)} РІ {path}.\n"
+            f"Р­С‚Рѕ РєСЌС€ СЃРєР°С‡Р°РЅРЅС‹С… РїР°РєРµС‚РѕРІ pip вЂ” РїСЂРё СЃР»РµРґСѓСЋС‰РµР№ СѓСЃС‚Р°РЅРѕРІРєРµ "
+            f"pip СЃРєР°С‡Р°РµС‚ РёС… Р·Р°РЅРѕРІРѕ (РїСЂРё РЅР°Р»РёС‡РёРё РёРЅС‚РµСЂРЅРµС‚Р°)."
         ),
         "size_bytes": size,
     }
@@ -212,7 +212,7 @@ def _vscode_cache_paths() -> list[Path]:
 def clean_vscode_cache_dry() -> dict:
     if _is_process_running("Code.exe"):
         return {
-            "detail": "❌ VSCode запущен. Закройте его и повторите.",
+            "detail": "вќЊ VSCode Р·Р°РїСѓС‰РµРЅ. Р—Р°РєСЂРѕР№С‚Рµ РµРіРѕ Рё РїРѕРІС‚РѕСЂРёС‚Рµ.",
             "error": "vscode_running",
         }
     total_count = 0
@@ -225,12 +225,12 @@ def clean_vscode_cache_dry() -> dict:
             total_size += s
             existing.append(str(p))
     if not existing:
-        return {"detail": "Кэш VSCode не найден.", "error": "not_found"}
+        return {"detail": "РљСЌС€ VSCode РЅРµ РЅР°Р№РґРµРЅ.", "error": "not_found"}
     return {
         "detail": (
-            f"Найдено {total_count} файлов на {_human(total_size)}.\n"
-            f"Папки:\n  " + "\n  ".join(existing) + "\n"
-            f"Это кэш VSCode — при следующем запуске он соберётся заново."
+            f"РќР°Р№РґРµРЅРѕ {total_count} С„Р°Р№Р»РѕРІ РЅР° {_human(total_size)}.\n"
+            f"РџР°РїРєРё:\n  " + "\n  ".join(existing) + "\n"
+            f"Р­С‚Рѕ РєСЌС€ VSCode вЂ” РїСЂРё СЃР»РµРґСѓСЋС‰РµРј Р·Р°РїСѓСЃРєРµ РѕРЅ СЃРѕР±РµСЂС‘С‚СЃСЏ Р·Р°РЅРѕРІРѕ."
         ),
         "size_bytes": total_size,
     }
@@ -238,7 +238,7 @@ def clean_vscode_cache_dry() -> dict:
 
 def clean_vscode_cache_apply() -> dict:
     if _is_process_running("Code.exe"):
-        return {"error": "vscode_running", "detail": "VSCode запущен."}
+        return {"error": "vscode_running", "detail": "VSCode Р·Р°РїСѓС‰РµРЅ."}
     total_deleted = 0
     total_failed = 0
     total_freed = 0
@@ -264,15 +264,15 @@ def _thumbcache_dir() -> Path:
 def clean_thumbnail_cache_dry() -> dict:
     d = _thumbcache_dir()
     if not d.exists():
-        return {"detail": f"Папка не найдена: {d}", "error": "not_found"}
+        return {"detail": f"РџР°РїРєР° РЅРµ РЅР°Р№РґРµРЅР°: {d}", "error": "not_found"}
     files = list(d.glob("thumbcache_*.db"))
     if not files:
-        return {"detail": "Файлы thumbcache_*.db не найдены.", "error": "not_found"}
+        return {"detail": "Р¤Р°Р№Р»С‹ thumbcache_*.db РЅРµ РЅР°Р№РґРµРЅС‹.", "error": "not_found"}
     size = sum(f.stat().st_size for f in files if f.exists())
     return {
         "detail": (
-            f"Найдено {len(files)} файлов thumbcache на {_human(size)}.\n"
-            f"Это кэш эскизов Проводника — он пересоберётся при просмотре папок."
+            f"РќР°Р№РґРµРЅРѕ {len(files)} С„Р°Р№Р»РѕРІ thumbcache РЅР° {_human(size)}.\n"
+            f"Р­С‚Рѕ РєСЌС€ СЌСЃРєРёР·РѕРІ РџСЂРѕРІРѕРґРЅРёРєР° вЂ” РѕРЅ РїРµСЂРµСЃРѕР±РµСЂС‘С‚СЃСЏ РїСЂРё РїСЂРѕСЃРјРѕС‚СЂРµ РїР°РїРѕРє."
         ),
         "size_bytes": size,
     }
@@ -344,24 +344,24 @@ def disable_startup_dry(name: str) -> dict:
     if not matches:
         available = [e.get("Name") for e in entries[:15]]
         return {
-            "detail": f"Запись '{name}' не найдена. "
-                      f"Доступные: {available}",
+            "detail": f"Р—Р°РїРёСЃСЊ '{name}' РЅРµ РЅР°Р№РґРµРЅР°. "
+                      f"Р”РѕСЃС‚СѓРїРЅС‹Рµ: {available}",
             "error": "not_found",
         }
     entry = matches[0]
     hkcu = _find_run_entry(name)
     hkcu_line = (
-        "Будет удалена из HKCU\\...\\Run с бэкапом в fixer_backups/."
+        "Р‘СѓРґРµС‚ СѓРґР°Р»РµРЅР° РёР· HKCU\\...\\Run СЃ Р±СЌРєР°РїРѕРј РІ fixer_backups/."
         if hkcu else
-        "НЕ в HKCU\\...\\Run — автоотключение не поддерживается для этой "
-        "локации. Отключите вручную через Диспетчер задач → Автозагрузка."
+        "РќР• РІ HKCU\\...\\Run вЂ” Р°РІС‚РѕРѕС‚РєР»СЋС‡РµРЅРёРµ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РґР»СЏ СЌС‚РѕР№ "
+        "Р»РѕРєР°С†РёРё. РћС‚РєР»СЋС‡РёС‚Рµ РІСЂСѓС‡РЅСѓСЋ С‡РµСЂРµР· Р”РёСЃРїРµС‚С‡РµСЂ Р·Р°РґР°С‡ в†’ РђРІС‚РѕР·Р°РіСЂСѓР·РєР°."
     )
     return {
         "detail": (
-            f"Имя:     {entry.get('Name')}\n"
-            f"Команда: {entry.get('Command')}\n"
-            f"Локация: {entry.get('Location')}\n"
-            f"Пользователь: {entry.get('User')}\n\n"
+            f"РРјСЏ:     {entry.get('Name')}\n"
+            f"РљРѕРјР°РЅРґР°: {entry.get('Command')}\n"
+            f"Р›РѕРєР°С†РёСЏ: {entry.get('Location')}\n"
+            f"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ: {entry.get('User')}\n\n"
             f"{hkcu_line}"
         ),
         "can_disable": hkcu is not None,
@@ -372,7 +372,7 @@ def disable_startup_apply(name: str) -> dict:
     hkcu = _find_run_entry(name)
     if not hkcu:
         return {"error": "not_in_HKCU_Run",
-                "detail": "Запись не в HKCU\\...\\Run. Отключите вручную."}
+                "detail": "Р—Р°РїРёСЃСЊ РЅРµ РІ HKCU\\...\\Run. РћС‚РєР»СЋС‡РёС‚Рµ РІСЂСѓС‡РЅСѓСЋ."}
 
     BACKUP_DIR.mkdir(exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -408,7 +408,7 @@ def _docker_available() -> bool:
 
 def docker_prune_dry() -> dict:
     if not _docker_available():
-        return {"detail": "Docker не установлен или не в PATH.",
+        return {"detail": "Docker РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РёР»Рё РЅРµ РІ PATH.",
                 "error": "no_docker"}
     try:
         r = subprocess.run(
@@ -418,12 +418,12 @@ def docker_prune_dry() -> dict:
         )
         out = r.stdout.decode("utf-8", errors="replace")
     except Exception as e:
-        return {"detail": f"Ошибка docker: {e}", "error": "docker_error"}
+        return {"detail": f"РћС€РёР±РєР° docker: {e}", "error": "docker_error"}
     return {
         "detail": (
-            "Будут удалены ВСЕ неиспользуемые образы, контейнеры, сети "
-            "и build cache. Запущенные контейнеры и их образы останутся.\n\n"
-            f"Текущий docker system df:\n{out}"
+            "Р‘СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹ Р’РЎР• РЅРµРёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РѕР±СЂР°Р·С‹, РєРѕРЅС‚РµР№РЅРµСЂС‹, СЃРµС‚Рё "
+            "Рё build cache. Р—Р°РїСѓС‰РµРЅРЅС‹Рµ РєРѕРЅС‚РµР№РЅРµСЂС‹ Рё РёС… РѕР±СЂР°Р·С‹ РѕСЃС‚Р°РЅСѓС‚СЃСЏ.\n\n"
+            f"РўРµРєСѓС‰РёР№ docker system df:\n{out}"
         ),
         "warning": "high_risk",
     }
@@ -443,37 +443,37 @@ def docker_prune_apply() -> dict:
 
 ACTIONS = {
     "clean_temp": {
-        "title": "Очистка временных файлов",
+        "title": "РћС‡РёСЃС‚РєР° РІСЂРµРјРµРЅРЅС‹С… С„Р°Р№Р»РѕРІ",
         "risk": "low", "needs_name": False,
         "dry": clean_temp_dry, "apply": clean_temp_apply,
     },
     "clean_recycle": {
-        "title": "Очистка корзины",
+        "title": "РћС‡РёСЃС‚РєР° РєРѕСЂР·РёРЅС‹",
         "risk": "low", "needs_name": False,
         "dry": clean_recycle_dry, "apply": clean_recycle_apply,
     },
     "clean_pip_cache": {
-        "title": "Очистка кэша pip",
+        "title": "РћС‡РёСЃС‚РєР° РєСЌС€Р° pip",
         "risk": "low", "needs_name": False,
         "dry": clean_pip_cache_dry, "apply": clean_pip_cache_apply,
     },
     "clean_vscode_cache": {
-        "title": "Очистка кэша VSCode",
+        "title": "РћС‡РёСЃС‚РєР° РєСЌС€Р° VSCode",
         "risk": "low", "needs_name": False,
         "dry": clean_vscode_cache_dry, "apply": clean_vscode_cache_apply,
     },
     "clean_thumbnail_cache": {
-        "title": "Очистка кэша эскизов Windows",
+        "title": "РћС‡РёСЃС‚РєР° РєСЌС€Р° СЌСЃРєРёР·РѕРІ Windows",
         "risk": "low", "needs_name": False,
         "dry": clean_thumbnail_cache_dry, "apply": clean_thumbnail_cache_apply,
     },
     "disable_startup": {
-        "title": "Отключение записи автозагрузки",
+        "title": "РћС‚РєР»СЋС‡РµРЅРёРµ Р·Р°РїРёСЃРё Р°РІС‚РѕР·Р°РіСЂСѓР·РєРё",
         "risk": "medium", "needs_name": True,
         "dry": disable_startup_dry, "apply": disable_startup_apply,
     },
     "docker_prune": {
-        "title": "Docker prune (все неиспользуемые образы)",
+        "title": "Docker prune (РІСЃРµ РЅРµРёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РѕР±СЂР°Р·С‹)",
         "risk": "high", "needs_name": False,
         "dry": docker_prune_dry, "apply": docker_prune_apply,
     },
@@ -481,25 +481,25 @@ ACTIONS = {
 
 
 def cmd_list():
-    print("\nДоступные действия:\n")
+    print("\nР”РѕСЃС‚СѓРїРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ:\n")
     for key, a in ACTIONS.items():
         print(f"  {key:<22} [{a['risk'].upper():<6}]  {a['title']}")
-    print(f"\nИспользование: python -m diag.fixer <action> [--apply] "
+    print(f"\nРСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: python -m diag.fixer <action> [--apply] "
           f"[--name NAME]\n")
 
 
 def cmd_log():
     if not LOG_PATH.exists():
-        print("История пуста.")
+        print("РСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°.")
         return
-    print(f"\nИстория ({LOG_PATH}):\n")
+    print(f"\nРСЃС‚РѕСЂРёСЏ ({LOG_PATH}):\n")
     with open(LOG_PATH, encoding="utf-8") as f:
         for line in f:
             try:
                 e = json.loads(line)
             except Exception:
                 continue
-            mark = "✅" if e.get("applied") else "🔍"
+            mark = "вњ…" if e.get("applied") else "рџ”Ќ"
             extra = ""
             if "freed_bytes" in e.get("result", {}):
                 extra = f" freed={_human(e['result']['freed_bytes'])}"
@@ -522,22 +522,22 @@ def cmd_action(action_name: str, name: str | None, apply: bool):
         return
 
     if dry_result.get("warning") == "high_risk":
-        print("⚠️  ВНИМАНИЕ: действие удалит Docker-образы. "
-              "Откат невозможен.\n")
+        print("вљ пёЏ  Р’РќРРњРђРќРР•: РґРµР№СЃС‚РІРёРµ СѓРґР°Р»РёС‚ Docker-РѕР±СЂР°Р·С‹. "
+              "РћС‚РєР°С‚ РЅРµРІРѕР·РјРѕР¶РµРЅ.\n")
 
     if not apply:
-        print("Dry-run. Чтобы выполнить: добавьте --apply.\n")
+        print("Dry-run. Р§С‚РѕР±С‹ РІС‹РїРѕР»РЅРёС‚СЊ: РґРѕР±Р°РІСЊС‚Рµ --apply.\n")
         _log(action_name, {"name": name} if name else {}, dry_result, False)
         return
 
-    answer = input("Применить? [y/N]: ").strip().lower()
-    if answer not in ("y", "yes", "д", "да"):
-        print("Отменено.")
+    answer = input("РџСЂРёРјРµРЅРёС‚СЊ? [y/N]: ").strip().lower()
+    if answer not in ("y", "yes", "Рґ", "РґР°"):
+        print("РћС‚РјРµРЅРµРЅРѕ.")
         return
 
     result = a["apply"](name) if a["needs_name"] else a["apply"]()
 
-    print("\nРезультат:")
+    print("\nР РµР·СѓР»СЊС‚Р°С‚:")
     for k, v in result.items():
         if "bytes" in k and isinstance(v, int):
             print(f"  {k}: {_human(v)}")
@@ -545,7 +545,7 @@ def cmd_action(action_name: str, name: str | None, apply: bool):
             print(f"  {k}: {v}")
 
     _log(action_name, {"name": name} if name else {}, result, True)
-    print(f"\nЛог: {LOG_PATH}\n")
+    print(f"\nР›РѕРі: {LOG_PATH}\n")
 
 
 def main(argv=None) -> int:
@@ -565,11 +565,11 @@ def main(argv=None) -> int:
         cmd_log()
         return 0
     if args.action not in ACTIONS:
-        print(f"Неизвестное действие: {args.action}")
-        print(f"Доступные: {', '.join(ACTIONS)}")
+        print(f"РќРµРёР·РІРµСЃС‚РЅРѕРµ РґРµР№СЃС‚РІРёРµ: {args.action}")
+        print(f"Р”РѕСЃС‚СѓРїРЅС‹Рµ: {', '.join(ACTIONS)}")
         return 1
     if ACTIONS[args.action]["needs_name"] and not args.name:
-        print(f"Для {args.action} нужен --name")
+        print(f"Р”Р»СЏ {args.action} РЅСѓР¶РµРЅ --name")
         return 1
     cmd_action(args.action, args.name, args.apply)
     return 0

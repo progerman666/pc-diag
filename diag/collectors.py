@@ -1,4 +1,4 @@
-"""Read-only сборщики данных о системе. Ничего не меняют."""
+﻿"""Read-only СЃР±РѕСЂС‰РёРєРё РґР°РЅРЅС‹С… Рѕ СЃРёСЃС‚РµРјРµ. РќРёС‡РµРіРѕ РЅРµ РјРµРЅСЏСЋС‚."""
 import json
 import os
 import platform
@@ -13,16 +13,16 @@ import psutil
 
 
 LEVEL_RU = {
-    "Critical": "Критический", "Error": "Ошибка",
-    "Warning": "Предупреждение", "Information": "Информация",
-    "Verbose": "Подробно", "Критический": "Критический",
-    "Ошибка": "Ошибка", "Предупреждение": "Предупреждение",
-    "Информация": "Информация",
+    "Critical": "РљСЂРёС‚РёС‡РµСЃРєРёР№", "Error": "РћС€РёР±РєР°",
+    "Warning": "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ", "Information": "РРЅС„РѕСЂРјР°С†РёСЏ",
+    "Verbose": "РџРѕРґСЂРѕР±РЅРѕ", "РљСЂРёС‚РёС‡РµСЃРєРёР№": "РљСЂРёС‚РёС‡РµСЃРєРёР№",
+    "РћС€РёР±РєР°": "РћС€РёР±РєР°", "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ": "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ",
+    "РРЅС„РѕСЂРјР°С†РёСЏ": "РРЅС„РѕСЂРјР°С†РёСЏ",
 }
 
 
 def _find_smartctl() -> str:
-    """Ищет smartctl в нескольких местах."""
+    """РС‰РµС‚ smartctl РІ РЅРµСЃРєРѕР»СЊРєРёС… РјРµСЃС‚Р°С…."""
     candidates = [
         Path(__file__).parent.parent / "smartctl" / "smartctl.exe",
         Path.cwd() / "smartctl" / "smartctl.exe",
@@ -419,7 +419,7 @@ def _ping(host: str, count: int = 4) -> dict:
             output = result.stdout.decode("utf-8", errors="replace")
 
         received = output.count("TTL=") + output.count("ttl=")
-        m = re.search(r"(?:Average|Среднее)\s*=\s*(\d+)", output)
+        m = re.search(r"(?:Average|РЎСЂРµРґРЅРµРµ)\s*=\s*(\d+)", output)
         avg_ms = int(m.group(1)) if m else None
         return {
             "host": host, "sent": count, "received": received,

@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 .venv/
 __pycache__/
 *.pyc
@@ -6,7 +6,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Секреты и локальные данные
+# РЎРµРєСЂРµС‚С‹ Рё Р»РѕРєР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ
 .env
 report.json
 fixer_log.jsonl
@@ -24,7 +24,7 @@ pc-diag-setup.exe
 # Inno Setup output
 Output/
 
-# Локальные файлы
+# Р›РѕРєР°Р»СЊРЅС‹Рµ С„Р°Р№Р»С‹
 social-preview.png
 
 # IDE

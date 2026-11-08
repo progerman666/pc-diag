@@ -1,7 +1,7 @@
-"""Печать человекочитаемого отчёта."""
+﻿"""РџРµС‡Р°С‚СЊ С‡РµР»РѕРІРµРєРѕС‡РёС‚Р°РµРјРѕРіРѕ РѕС‚С‡С‘С‚Р°."""
 
-SEV_EMOJI = {"high": "🔴", "medium": "🟡", "low": "🟢"}
-SEV_LABEL = {"high": "ВЫСОКИЙ", "medium": "СРЕДНИЙ", "low": "НИЗКИЙ"}
+SEV_EMOJI = {"high": "рџ”ґ", "medium": "рџџЎ", "low": "рџџў"}
+SEV_LABEL = {"high": "Р’Р«РЎРћРљРР™", "medium": "РЎР Р•Р”РќРР™", "low": "РќРР—РљРР™"}
 
 
 def print_report(data: dict, findings: list[dict], llm_text: str | None = None):
@@ -10,28 +10,28 @@ def print_report(data: dict, findings: list[dict], llm_text: str | None = None):
 
     print()
     print("=" * 64)
-    print(f"  ДИАГНОСТИКА: {sysinfo['hostname']}")
+    print(f"  Р”РРђР“РќРћРЎРўРРљРђ: {sysinfo['hostname']}")
     print("=" * 64)
-    print(f"  ОС:        {sysinfo['os']} ({sysinfo['machine']})")
+    print(f"  РћРЎ:        {sysinfo['os']} ({sysinfo['machine']})")
     print(f"  Python:    {sysinfo['python']}")
-    print(f"  CPU:       {sysinfo['cpu_cores_physical']} физ / "
-          f"{sysinfo['cpu_cores_logical']} лог")
-    print(f"  RAM:       {sysinfo['ram_total_gb']} ГБ, "
-          f"занято {load['ram_percent']}%")
+    print(f"  CPU:       {sysinfo['cpu_cores_physical']} С„РёР· / "
+          f"{sysinfo['cpu_cores_logical']} Р»РѕРі")
+    print(f"  RAM:       {sysinfo['ram_total_gb']} Р“Р‘, "
+          f"Р·Р°РЅСЏС‚Рѕ {load['ram_percent']}%")
     print(f"  CPU load:  {load['cpu_percent']}%")
     print(f"  Swap:      {load['swap_percent']}%")
-    print(f"  Аптайм:    {sysinfo['uptime_hours']} ч")
+    print(f"  РђРїС‚Р°Р№Рј:    {sysinfo['uptime_hours']} С‡")
 
-    # ── Диски ──
-    print("\n── Диски ──")
+    # в”Ђв”Ђ Р”РёСЃРєРё в”Ђв”Ђ
+    print("\nв”Ђв”Ђ Р”РёСЃРєРё в”Ђв”Ђ")
     for d in data["disks"]:
         bar = _bar(d["percent"])
         print(f"  {d['mount']:<4} {d['percent']:>3}% {bar}  "
-              f"{d['used_gb']}/{d['total_gb']} ГБ  ({d['fstype']})")
-            # ── Здоровье дисков (SMART) ──
+              f"{d['used_gb']}/{d['total_gb']} Р“Р‘  ({d['fstype']})")
+            # в”Ђв”Ђ Р—РґРѕСЂРѕРІСЊРµ РґРёСЃРєРѕРІ (SMART) в”Ђв”Ђ
     disk_health = data.get("disk_health", [])
     if disk_health:
-        print("\n── Здоровье дисков (SMART) ──")
+        print("\nв”Ђв”Ђ Р—РґРѕСЂРѕРІСЊРµ РґРёСЃРєРѕРІ (SMART) в”Ђв”Ђ")
         for dh in disk_health:
             model = dh.get("model", "?")
             dev = dh.get("device_id", "?")
@@ -39,108 +39,108 @@ def print_report(data: dict, findings: list[dict], llm_text: str | None = None):
             os_ = dh.get("operational_status", "?")
             pred = dh.get("predict_failure")
 
-            # Формируем строку статуса
+            # Р¤РѕСЂРјРёСЂСѓРµРј СЃС‚СЂРѕРєСѓ СЃС‚Р°С‚СѓСЃР°
             if pred is True:
-                status = "🔴 PREDICTED FAILURE"
+                status = "рџ”ґ PREDICTED FAILURE"
             elif hs.lower() not in ("healthy", "ok"):
-                status = f"🔴 {hs}"
+                status = f"рџ”ґ {hs}"
             elif os_.lower() not in ("ok",):
-                status = f"🟡 {os_}"
+                status = f"рџџЎ {os_}"
             else:
-                status = "🟢 Healthy"
+                status = "рџџў Healthy"
 
             line = f"  [{dev}] {model:<30} {status}"
 
-            # Дополнительные параметры
+            # Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹
             extras = []
             if dh.get("temperature") is not None:
-                extras.append(f"T={dh['temperature']}°C")
+                extras.append(f"T={dh['temperature']}В°C")
             if dh.get("wear") is not None:
                 extras.append(f"Wear={dh['wear']}%")
             if dh.get("power_on_hours") is not None:
-                extras.append(f"POH={dh['power_on_hours']}ч")
+                extras.append(f"POH={dh['power_on_hours']}С‡")
             if extras:
                 line += "  (" + ", ".join(extras) + ")"
 
             print(line)
 
-            # Ошибки, если есть
+            # РћС€РёР±РєРё, РµСЃР»Рё РµСЃС‚СЊ
             r_err = dh.get("read_errors_uncorrected") or 0
             w_err = dh.get("write_errors_uncorrected") or 0
             if r_err > 0 or w_err > 0:
-                print(f"       ⚠️ Uncorrected: R={r_err}, W={w_err}")
+                print(f"       вљ пёЏ Uncorrected: R={r_err}, W={w_err}")
 
-    # ── Топ по RAM ──
-    print("\n── Топ по RAM ──")
+    # в”Ђв”Ђ РўРѕРї РїРѕ RAM в”Ђв”Ђ
+    print("\nв”Ђв”Ђ РўРѕРї РїРѕ RAM в”Ђв”Ђ")
     for p in data["processes"]["top_ram"][:5]:
-        print(f"  {p['name']:<28} {p['ram_mb']:>8.1f} МБ  (PID {p['pid']})")
+        print(f"  {p['name']:<28} {p['ram_mb']:>8.1f} РњР‘  (PID {p['pid']})")
 
-    # ── Топ по CPU ──
-    print("\n── Топ по CPU ──")
+    # в”Ђв”Ђ РўРѕРї РїРѕ CPU в”Ђв”Ђ
+    print("\nв”Ђв”Ђ РўРѕРї РїРѕ CPU в”Ђв”Ђ")
     for p in data["processes"]["top_cpu"][:5]:
         print(f"  {p['name']:<28} {p['cpu_percent']:>6.1f}%  (PID {p['pid']})")
 
-    # ── Сеть ──
+    # в”Ђв”Ђ РЎРµС‚СЊ в”Ђв”Ђ
     net = data.get("network", {})
     if net:
-        print("\n── Сеть ──")
+        print("\nв”Ђв”Ђ РЎРµС‚СЊ в”Ђв”Ђ")
         if net.get("interface"):
-            print(f"  Интерфейс: {net['interface']}")
+            print(f"  РРЅС‚РµСЂС„РµР№СЃ: {net['interface']}")
         if net.get("gateway"):
-            print(f"  Шлюз:      {net['gateway']}")
+            print(f"  РЁР»СЋР·:      {net['gateway']}")
         if net.get("dns"):
             print(f"  DNS:       {net['dns']}")
         for ping in net.get("pings", []):
             if ping.get("ok"):
                 avg = ping.get("avg_ms")
-                avg_str = f"{avg} мс" if avg is not None else "<1 мс"
+                avg_str = f"{avg} РјСЃ" if avg is not None else "<1 РјСЃ"
                 print(f"  Ping {ping['host']:<15} "
                       f"{ping['received']}/{ping['sent']} "
-                      f"({ping['loss_pct']}% потерь, {avg_str})")
+                      f"({ping['loss_pct']}% РїРѕС‚РµСЂСЊ, {avg_str})")
             else:
-                print(f"  Ping {ping['host']:<15} ❌ НЕ ОТВЕЧАЕТ")
+                print(f"  Ping {ping['host']:<15} вќЊ РќР• РћРўР’Р•Р§РђР•Рў")
 
-    # ── Службы ──
+    # в”Ђв”Ђ РЎР»СѓР¶Р±С‹ в”Ђв”Ђ
     services = data.get("services", [])
     if services:
-        print(f"\n── Остановленные авто-службы ({len(services)}) ──")
+        print(f"\nв”Ђв”Ђ РћСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Рµ Р°РІС‚Рѕ-СЃР»СѓР¶Р±С‹ ({len(services)}) в”Ђв”Ђ")
         for s in services[:10]:
             print(f"  {str(s.get('name')):<30} {s.get('display_name')}")
         if len(services) > 10:
-            print(f"  ... и ещё {len(services) - 10}")
+            print(f"  ... Рё РµС‰С‘ {len(services) - 10}")
 
-    # ── Папки ──
+    # в”Ђв”Ђ РџР°РїРєРё в”Ђв”Ђ
     folders = data.get("folder_sizes", [])
     if folders:
-        print("\n── Крупные папки в профиле ──")
+        print("\nв”Ђв”Ђ РљСЂСѓРїРЅС‹Рµ РїР°РїРєРё РІ РїСЂРѕС„РёР»Рµ в”Ђв”Ђ")
         for f in folders[:10]:
-            print(f"  {str(f.get('name')):<30} {f.get('gb', 0):>7.2f} ГБ")
+            print(f"  {str(f.get('name')):<30} {f.get('gb', 0):>7.2f} Р“Р‘")
         if len(folders) > 10:
-            print(f"  ... и ещё {len(folders) - 10}")
+            print(f"  ... Рё РµС‰С‘ {len(folders) - 10}")
 
-    # ── Event Log ──
+    # в”Ђв”Ђ Event Log в”Ђв”Ђ
     if data.get("event_errors"):
-        print(f"\n── Ошибки Event Log (24ч, {len(data['event_errors'])}) ──")
+        print(f"\nв”Ђв”Ђ РћС€РёР±РєРё Event Log (24С‡, {len(data['event_errors'])}) в”Ђв”Ђ")
         for e in data["event_errors"][:5]:
             print(f"  {e}")
         if len(data["event_errors"]) > 5:
-            print(f"  ... и ещё {len(data['event_errors']) - 5}")
+            print(f"  ... Рё РµС‰С‘ {len(data['event_errors']) - 5}")
 
-    # ── Проблемы ──
-    print("\n── Найденные проблемы ──")
+    # в”Ђв”Ђ РџСЂРѕР±Р»РµРјС‹ в”Ђв”Ђ
+    print("\nв”Ђв”Ђ РќР°Р№РґРµРЅРЅС‹Рµ РїСЂРѕР±Р»РµРјС‹ в”Ђв”Ђ")
     if not findings:
-        print("  ✅ Явных проблем не найдено.")
+        print("  вњ… РЇРІРЅС‹С… РїСЂРѕР±Р»РµРј РЅРµ РЅР°Р№РґРµРЅРѕ.")
     else:
         for f in findings:
-            emoji = SEV_EMOJI.get(f["severity"], "•")
+            emoji = SEV_EMOJI.get(f["severity"], "вЂў")
             label = SEV_LABEL.get(f["severity"], f["severity"].upper())
             print(f"\n  {emoji} [{label}] {f['title']}")
             print(f"     {f['detail']}")
-            print(f"     → {f['suggest']}")
+            print(f"     в†’ {f['suggest']}")
 
-    # ── LLM ──
+    # в”Ђв”Ђ LLM в”Ђв”Ђ
     if llm_text:
-        print("\n── Объяснение от LLM ──")
+        print("\nв”Ђв”Ђ РћР±СЉСЏСЃРЅРµРЅРёРµ РѕС‚ LLM в”Ђв”Ђ")
         for line in llm_text.splitlines():
             print(f"  {line}")
 
@@ -149,4 +149,4 @@ def print_report(data: dict, findings: list[dict], llm_text: str | None = None):
 
 def _bar(percent: int, width: int = 20) -> str:
     filled = int(width * percent / 100)
-    return "[" + "█" * filled + "░" * (width - filled) + "]"
+    return "[" + "в–€" * filled + "в–‘" * (width - filled) + "]"
