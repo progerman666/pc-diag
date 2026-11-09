@@ -16,6 +16,7 @@ fixer_backups/
 build/
 dist/
 *.spec
+!pc-diag.spec
 
 # Releases
 pc-diag-win64-portable.zip

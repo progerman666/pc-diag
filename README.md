@@ -72,52 +72,54 @@ text
 ---
 
 ## Пример вывода
+
+Так выглядит отчёт `pc-diag-cli.exe --no-llm` (в окне то же самое, только с
+подсветкой и кнопками):
+
+```text
 ================================================================
-ДИАГНОСТИКА: DESKTOP-SFNMU9R
+  DIAGNOSTICS: DESKTOP-SFNMU9R
 ================================================================
-ОС: Windows 10 (AMD64)
-Python: 3.11.9
-CPU: 4 физ / 4 лог
-RAM: 15.9 ГБ, занято 47.2%
-CPU load: 12.1%
-Swap: 5.7%
-Аптайм: 1.1 ч
+  OS:        Windows 10 (AMD64)
+  Python:    3.11.9
+  CPU:       4 phys / 4 log
+  RAM:       15.9 GB, used 63.2%
+  CPU load:  91.1%
+  Swap:      20.8%
+  Uptime:    4.2 h
 
-── Диски ──
-C:\ 89.1% [█████████████████░░░] 98.7/110.8 ГБ (NTFS)
-D:\ 90.6% [██████████████████░░] 100.3/110.7 ГБ (NTFS)
+-- Disks --
+  C:\  96.1% [███████████████████░]  106.4/110.8 GB  (NTFS)
+  D:\  91.9% [██████████████████░░]  101.7/110.7 GB  (NTFS)
 
-── Здоровье дисков (SMART) ──
-[0] ADATA SU650 🟢 Healthy (T=46°C, Wear=0%, POH=20654ч)
-[1] ADATA SU650NS38 🟢 Healthy (T=39°C, Wear=66%, POH=17186ч)
+-- Disk Health (SMART) --
+  [0] ADATA SU650                    🟢 Healthy  (T=45C, Wear=0%, POH=20762h)
+  [1] ADATA SU650NS38                🟢 Healthy  (T=39C, Wear=66%, POH=17290h)
 
-── Топ по RAM ──
-Code.exe 414.1 МБ (PID 9240)
-steamwebhelper.exe 405.6 МБ (PID 14152)
-...
+-- Top RAM --
+  MemCompression                  731.0 MB  (PID 2584)
+  Code.exe                        659.5 MB  (PID 9464)
 
-── Сеть ──
-Интерфейс: Ethernet
-Шлюз: 192.168.0.1
-DNS: 8.8.8.8, 8.8.4.4
-Ping 192.168.0.1 4/4 (0.0% потерь, 0 мс)
-Ping 8.8.8.8 4/4 (0.0% потерь, 71 мс)
+-- Network --
+  Interface: Ethernet
+  Gateway:   192.168.0.1
+  DNS:       8.8.8.8, 8.8.4.4
+  Ping 192.168.0.1     4/4 (0.0% loss, 0 ms)
 
-── Найденные проблемы ──
+-- Found Problems --
 
-🟡 [СРЕДНИЙ] SSD ADATA SU650NS38 изношен на 66%
-Осталось 34% ресурса записи.
-→ Сделайте бэкап важных данных. Следите за Wear раз в месяц.
+  [HIGH] CPU load is 90%+
+     Current load: 91.1%.
+     -> Check top_cpu.
 
-🟡 [СРЕДНИЙ] Диск C:\ заполнен на 89.1%
-98.7/110.8 ГБ.
-→ Освободите место заранее.
+  [HIGH] Disk C:\ is almost full
+     96.1% (106.4/110.8 GB).
+     -> Free up space: temp files, large folders, recycle bin.
 
-🟢 [НИЗКИЙ] Ошибки в Event Log за 24ч: 2
-Не критично, но стоит глянуть.
-→ Смотрите event_errors.
-
-text
+  [MEDIUM] SSD ADATA SU650NS38 is 66% worn out
+     34% write resource left.
+     -> Back up your data. Monitor Wear monthly.
+```
 
 ---
 
@@ -126,10 +128,13 @@ text
 ### Вариант 1: Portable (без установки, рекомендуется для выездов)
 
 1. Скачайте `pc-diag-win64-portable.zip` из [Releases](https://github.com/progerman666/pc-diag/releases/latest).
-2. Распакуйте в любую папку (например, на флешку).
-3. Запустите `pc-diag.exe --no-llm --fast`.
+2. Распакуйте **всю папку** — рядом должны лежать `pc-diag.exe`,
+   `pc-diag-cli.exe` и папка `_internal`.
+3. Запустите `pc-diag.exe` — откроется окно, диагностика начнётся сама.
 
-Ничего не устанавливается в систему, не требует прав администратора.
+Ничего не устанавливается в систему. Права администратора не обязательны,
+но без них часть SMART-данных (износ, температура) может быть недоступна —
+в окне есть кнопка «Запустить как администратор».
 Размер распакованной папки — ~30 МБ.
 
 ### Вариант 2: Установщик
@@ -179,15 +184,26 @@ pc-diag автоматически использует smartctl как fallback
 устанавливать ничего не нужно.
 
 Использование
-Диагностика
+Диагностика — окно (рекомендуется)
+Запустите pc-diag.exe. Откроется окно:
+
+вкладка «Диагностика» — стартует автоматически, показывает сводку
+(🔴 критичных / 🟡 средних / 🟢 мелочей), полный отчёт и кнопку
+«Сохранить отчёт» (по умолчанию — в «Документы»);
+вкладка «Очистка» — безопасные действия (TEMP, корзина, кэш pip,
+эскизы Windows, кэш VSCode): сначала «Проверить» → видно, сколько
+освободится, потом «Очистить» с подтверждением.
+
+Диагностика — консоль (pc-diag-cli.exe)
 powershell
-pc-diag.exe --no-llm --fast     # быстро: без LLM и без сканирования папок
-pc-diag.exe --no-llm            # + размеры папок (медленнее на 30-60 с)
-pc-diag.exe                     # + LLM-объяснение
-pc-diag.exe --json report.json  # сохранить полный отчёт в JSON
+pc-diag-cli.exe --no-llm          # быстро: без LLM и без сканирования папок
+pc-diag-cli.exe --slow           # + размеры папок (медленнее на 30-60 с)
+pc-diag-cli.exe                  # + LLM-объяснение (если настроен .env)
+pc-diag-cli.exe --json report.json   # сохранить полный отчёт в JSON
+
 Из исходников — то же самое через python -m diag.
 
-Fixer (только из исходников)
+Fixer (очистка из консоли, только из исходников)
 Каждое действие проходит цикл: dry-run → подтверждение → бэкап → лог.
 
 powershell
@@ -209,9 +225,10 @@ disable_startup — отключение записи автозагрузки
 
 docker_prune — docker system prune -a
 
-Внимание: в готовой .exe-сборке (portable и installer)
-fixer отключён — чтобы случайно не навредить системе клиента.
-Доступна только диагностика. Если нужен fixer — запускайте из исходников.
+Внимание: в готовой .exe-сборке эти команды fixer недоступны —
+вместо них во вкладке «Очистка» окна `pc-diag.exe` есть те же действия
+(TEMP, корзина, кэш pip, эскизы, кэш VSCode) с подтверждением и логом.
+`disable_startup` и `docker_prune` — только из исходников.
 
 Безопасность
 pc-diag спроектирован так, чтобы не сломать систему:
@@ -271,18 +288,21 @@ llm.explain(data, findings)   # опционально
 Требования: PyInstaller (pip install pyinstaller), smartmontools
 в C:\Program Files\smartmontools\bin\.
 
-Portable (--onedir):
-
+Сборка одной командой (spec в репозитории):
 powershell
-pyinstaller --name pc-diag --onedir --console --paths . ^
-  --add-binary "C:\Program Files\smartmontools\bin\smartctl.exe;smartctl" ^
-  --hidden-import psutil --hidden-import requests ^
-  --hidden-import dotenv --hidden-import anthropic ^
-  run_diag.py
-Результат: dist\pc-diag\ (папка ~30 МБ с pc-diag.exe и _internal\).
+.\\.venv\\Scripts\\pyinstaller.exe pc-diag.spec --noconfirm
+Результат: dist\pc-diag\ — папка ~30 МБ, внутри два exe:
+
+pc-diag.exe — графический интерфейс (без окна консоли);
+pc-diag-cli.exe — консольный режим (--no-llm, --slow, --json);
+_internal\ — общие библиотеки и smartctl.exe.
+
+Перед релизом поднимите версию в двух местах: diag/version.py
+и version_info.txt (метаданные exe), а также в installer.iss.
 
 Установщик: Inno Setup, скрипт installer.iss в корне проекта.
-Компиляция: Build → Compile, результат — pc-diag-setup.exe.
+Компиляция: Build → Compile (или ISCC.exe installer.iss),
+результат — C:\Users\<вы>\Output\pc-diag-setup.exe.
 
 Ограничения
 Только Windows x64. WMI, Event Log, Get-PhysicalDisk —
