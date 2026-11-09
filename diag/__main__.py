@@ -11,12 +11,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from .collectors import collect_all
+from .console import init_console
 from .rules import check
 from .report import print_report
 from . import llm
 
 
 def main() -> int:
+    init_console()
     load_dotenv()
     ap = argparse.ArgumentParser(
         prog="diag",

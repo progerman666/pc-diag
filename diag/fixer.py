@@ -9,6 +9,8 @@ import winreg
 from datetime import datetime
 from pathlib import Path
 
+from .console import init_console
+
 LOG_PATH = Path("fixer_log.jsonl")
 BACKUP_DIR = Path("fixer_backups")
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
@@ -146,7 +148,8 @@ def clean_temp_apply() -> dict:
     return {"deleted": deleted, "failed": failed, "freed_bytes": freed}
 
 
-def clean_recycle_dry() -> dict:
+def _recycle_stats() -> tuple[int, int]:
+    """Возвращает (количество объектов, байт) в корзине."""
     ps = (
         "$items = (New-Object -ComObject Shell.Application).NameSpace(0xA).Items(); "
         "$count = $items.Count; "
@@ -155,23 +158,34 @@ def clean_recycle_dry() -> dict:
         "[PSCustomObject]@{ Count=$count; Bytes=$sum } | ConvertTo-Json -Compress"
     )
     raw, rc = _run_ps(ps, timeout=30)
-    count, size = 0, 0
     if rc == 0 and raw and not raw.startswith("[error"):
         try:
             data = json.loads(raw)
-            count = data.get("Count", 0)
-            size = data.get("Bytes", 0)
+            return int(data.get("Count", 0)), int(data.get("Bytes", 0) or 0)
         except Exception:
             pass
+    return 0, 0
+
+
+def clean_recycle_dry() -> dict:
+    count, size = _recycle_stats()
     return {
         "detail": f"В корзине {count} объектов, всего {_human(size)}.",
         "size_bytes": size,
+        "items": count,
     }
 
 
 def clean_recycle_apply() -> dict:
-    _run_ps("Clear-RecycleBin -Force -ErrorAction SilentlyContinue", timeout=120)
-    return {"done": True}
+    # Размер считаем ДО очистки: после Clear-RecycleBin его уже не узнать,
+    # а GUI показывает пользователю именно освобождённое место.
+    count, size = _recycle_stats()
+    _, rc = _run_ps("Clear-RecycleBin -Force -ErrorAction SilentlyContinue", timeout=120)
+    return {
+        "done": rc == 0,
+        "deleted": count,
+        "freed_bytes": size,
+    }
 
 
 def _pip_cache_path() -> Path:
@@ -549,6 +563,7 @@ def cmd_action(action_name: str, name: str | None, apply: bool):
 
 
 def main(argv=None) -> int:
+    init_console()
     argv = argv if argv is not None else sys.argv[1:]
     ap = argparse.ArgumentParser(prog="diag.fixer")
     ap.add_argument("action", nargs="?")
