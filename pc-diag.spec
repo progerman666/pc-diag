@@ -1,11 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 # Сборка pc-diag: два exe в одной папке (GUI + консольный) и общий _internal.
+import os
+from pathlib import Path
 
-SMARTCTL = 'C:/Program Files/smartmontools/bin/smartctl.exe'
+# Путь к smartctl можно переопределить через SMARTCTL_PATH — нужно в CI,
+# где smartmontools ставится в другое место. Если файла нет, сборка
+# продолжится без него (SMART-детали просто останутся пустыми).
+SMARTCTL = os.environ.get(
+    'SMARTCTL_PATH', 'C:/Program Files/smartmontools/bin/smartctl.exe',
+)
+BINARIES = [(SMARTCTL, 'smartctl')] if Path(SMARTCTL).is_file() else []
 
 COMMON = dict(
     pathex=[],
-    binaries=[(SMARTCTL, 'smartctl')],
+    binaries=BINARIES,
     datas=[('assets', 'assets')],
     hiddenimports=[
         'psutil', 'requests', 'dotenv', 'anthropic', 'customtkinter',

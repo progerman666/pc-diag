@@ -9,6 +9,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/progerman666/pc-diag)](https://github.com/progerman666/pc-diag/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/progerman666/pc-diag/total)](https://github.com/progerman666/pc-diag/releases)
 
 **[Скачать](https://github.com/progerman666/pc-diag/releases/latest)** ·
 **[Сайт](https://pc-diag.ru/)** ·
@@ -302,7 +303,15 @@ _internal\ — общие библиотеки и smartctl.exe.
 
 Установщик: Inno Setup, скрипт installer.iss в корне проекта.
 Компиляция: Build → Compile (или ISCC.exe installer.iss),
-результат — C:\Users\<вы>\Output\pc-diag-setup.exe.
+результат — Output\pc-diag-setup.exe.
+
+Автосборка релиза: .github/workflows/release.yml. Достаточно запушить
+тег — GitHub Actions соберёт exe, zip и setup и сам приложит их к релизу.
+Перед этим версия в diag/version.py должна совпадать с тегом:
+
+powershell
+git tag -a v1.1.4 -m "v1.1.4"
+git push origin v1.1.4
 
 Ограничения
 Только Windows x64. WMI, Event Log, Get-PhysicalDisk —
