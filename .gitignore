@@ -6,7 +6,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# РЎРµРєСЂРµС‚С‹ Рё Р»РѕРєР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ
+# Секреты и локальные данные
 .env
 report.json
 fixer_log.jsonl
@@ -24,7 +24,7 @@ pc-diag-setup.exe
 # Inno Setup output
 Output/
 
-# Р›РѕРєР°Р»СЊРЅС‹Рµ С„Р°Р№Р»С‹
+# Локальные файлы
 social-preview.png
 
 # IDE
