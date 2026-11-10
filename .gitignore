@@ -13,6 +13,7 @@ __pycache__/
 !.dev.vars.example
 report.json
 bot-worker/secrets.json
+bot-worker/.wrangler/
 fixer_log.jsonl
 fixer_backups/
 
