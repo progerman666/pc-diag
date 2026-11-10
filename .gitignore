@@ -12,6 +12,7 @@ __pycache__/
 .dev.vars.*
 !.dev.vars.example
 report.json
+bot-worker/secrets.json
 fixer_log.jsonl
 fixer_backups/
 
