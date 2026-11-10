@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Как проверить износ SSD в Windows: пошагово</title>
+<meta name="description" content="Пошаговая инструкция: как узнать износ SSD (Total Bytes Written), прочитать SMART и понять, когда диск пора менять. Бесплатная проверка за 60 секунд.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="canonical" href="https://pc-diag.ru/article2.html">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1e1e1e; color: #e5e5e5; line-height: 1.7; }
+  .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 40px; }
+  header a { color: #6daa45; text-decoration: none; font-weight: bold; font-size: 18px; }
+  h1 { font-size: 36px; color: #fff; margin-bottom: 20px; line-height: 1.2; }
+  .meta { color: #888; font-size: 14px; margin-bottom: 30px; }
+  h2 { font-size: 24px; color: #fff; margin-top: 40px; margin-bottom: 16px; }
+  h3 { font-size: 18px; color: #fff; margin-top: 24px; margin-bottom: 10px; }
+  p { margin-bottom: 16px; color: #d0d0d0; }
+  ul, ol { margin-bottom: 20px; padding-left: 24px; color: #d0d0d0; }
+  li { margin-bottom: 8px; }
+  strong { color: #fff; }
+  .cta-box { background: #252525; border: 1px solid #333; border-left: 4px solid #6daa45; padding: 24px; border-radius: 8px; margin: 40px 0; }
+  .cta-box h3 { color: #fff; margin-bottom: 10px; }
+  .cta-box p { margin-bottom: 16px; }
+  .buy-box { background: #232a20; border: 1px solid #3a4a32; border-left: 4px solid #7cc24a; padding: 24px; border-radius: 8px; margin: 30px 0; }
+  .buy-box h3 { color: #fff; margin-top: 0; margin-bottom: 12px; }
+  .buy-box ul { margin-bottom: 12px; }
+  .price-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 15px; }
+  .price-table th, .price-table td { border: 1px solid #333; padding: 10px 12px; text-align: left; vertical-align: top; }
+  .price-table th { background: #2a2a2a; color: #fff; }
+  .price-table tr:nth-child(even) td { background: #232323; }
+  .price-table a { color: #a6e06f; }
+  .btn { display: inline-block; padding: 12px 24px; background: #6daa45; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background 0.2s; }
+  .btn:hover { background: #5a9438; }
+  footer { padding: 40px 0; text-align: center; color: #888; border-top: 1px solid #333; margin-top: 60px; font-size: 14px; }
+  footer a { color: #6daa45; text-decoration: none; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question","name": "Вредно ли дефрагментировать SSD?","acceptedAnswer": {"@type": "Answer","text": "Да, обычная дефрагментация SSD вредна: она создаёт лишние циклы записи и расходует ресурс. Для SSD нужна команда TRIM, которую Windows 10/11 выполняет автоматически при включённой оптимизации."}},
+    {"@type": "Question","name": "Сколько живёт SSD-диск?","acceptedAnswer": {"@type": "Answer","text": "Ресурс SSD измеряется в TBW (total bytes written). Для домашнего диска это обычно 5–10 лет. Точный остаток показывает SMART; при износе выше 80% стоит сделать резервную копию и присмотреть замену."}},
+    {"@type": "Question","name": "Что значит Wear 66% в отчёте?","acceptedAnswer": {"@type": "Answer","text": "Это означает, что диск израсходовал 66% заявленного ресурса записи. Диск ещё работает, но остаточный ресурс ограничен — самое время наладить бэкап и планировать замену."}}
+  ]
+}
+</script>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <a href="index.html">← На главную (pc-diag)</a>
+  </header>
+
+  <article>
+    <h1>Как проверить износ SSD в Windows: пошагово</h1>
+    <div class="meta">Обновлено: Ноябрь 2026 · Время чтения: 6 минут</div>
+
+    <p>SSD-диск изнашивается постепенно: у него ограниченный ресурс записи, и однажды он может внезапно перейти в режим «только чтение» или полностью отказать. Проверить износ несложно — достаточно прочитать несколько SMART-атрибутов. Ниже — как это сделать за пару минут и как понять, пора ли менять диск.</p>
+
+    <h2>1. Зачем следить за износом SSD</h2>
+    <p>Каждая запись на SSD расходует ресурс ячеек памяти. Производители указывают запас в <strong>TBW</strong> (total bytes written) — сколько байт можно записать до гарантированного износа. У домашнего диска это обычно 150–600 ТБ, чего хватает на 5–10 лет.</p>
+    <p>Проблема в том, что износ идёт неравномерно и не всегда заметен: система работает, но диск уже близок к пределу. Узнав остаток заранее, вы успеете <strong>сделать резервную копию</strong> и купить замену без паники и потери данных.</p>
+
+    <h2>2. SMART-атрибуты простыми словами</h2>
+    <p>SMART — встроенная система самодиагностики диска. Для оценки износа важны несколько атрибутов (названия у разных производителей отличаются):</p>
+    <ul>
+      <li><strong>Wear Leveling / Percent Used</strong> — процент израсходованного ресурса. Именно этот показатель чаще всего называют «износом».</li>
+      <li><strong>Total Bytes Written (TBW)</strong> — сколько всего данных записано за время работы.</li>
+      <li><strong>Power On Hours (POH)</strong> — наработка в часах.</li>
+      <li><strong>Reallocated Sectors / Media Errors</strong> — переназначенные и повреждённые сектора. Если их число растёт — диск деградирует.</li>
+      <li><strong>Temperature</strong> — температура. Перегрев ускоряет износ.</li>
+    </ul>
+    <p>Ориентир простой: <strong>износ до 80%</strong> — рабочий диапазон, <strong>выше 80–90%</strong> — пора готовиться к замене и обязательно держать бэкап.</p>
+
+    <h2>3. Как проверить износ SSD через pc-diag</h2>
+    <p>Быстрее всего получить полную картину за один проход — с помощью бесплатной утилиты <strong>pc-diag</strong>. Она сама соберёт SMART, наработку и температуру и покажет износ в понятном виде.</p>
+    <ol>
+      <li><strong>Скачайте pc-diag</strong> с официального сайта — portable-версия не требует установки.</li>
+      <li><strong>Запустите программу.</strong> Для полных SMART-данных есть кнопка «Запустить как администратор».</li>
+      <li><strong>Подождите около 60 секунд</strong> — диагностика идёт автоматически.</li>
+      <li><strong>Найдите блок «Disk Health (SMART)»</strong>: там для каждого диска указаны Wear (износ), POH (наработка) и статус Healthy.</li>
+      <li><strong>Сравните с ориентиром:</strong> износ до 80% — норма, выше — пора на бэкап и замену.</li>
+    </ol>
+
+    <div class="cta-box">
+      <h3>🖥️ Проверьте износ своего SSD бесплатно</h3>
+      <p>pc-diag покажет износ, наработку и температуру всех дисков за 60 секунд — без установки и регистрации, работает офлайн.</p>
+      <a href="https://pc-diag.ru" class="btn">Скачать pc-diag (бесплатно)</a>
+    </div>
+
+    <h2>4. Проверка через CrystalDiskInfo (для сравнения)</h2>
+    <p>CrystalDiskInfo — популярная утилита, которая показывает SMART в «сыром» виде. Она полезна, если хочется увидеть конкретные атрибуты:</p>
+    <ul>
+      <li>Откройте программу и выберите нужный диск сверху.</li>
+      <li>Посмотрите <strong>Health Status</strong> (статус: Good / Caution / Bad).</li>
+      <li>Найдите <strong>Total Host Writes</strong> — сколько данных записано, и <strong>Power On Hours</strong> — наработку.</li>
+    </ul>
+    <p>Минус CrystalDiskInfo — она показывает только SMART и не даёт общей картины по системе. <strong>pc-diag</strong>, кроме дисков, сразу проверяет Event Log, сеть, службы и самые «прожорливые» процессы — удобнее для разовой диагностики.</p>
+
+    <h3>Чем ещё можно посмотреть износ</h3>
+    <p>Встроенными средствами Windows точный процент износа не увидеть, но можно быстро посмотреть модель и состояние дисков через PowerShell:</p>
+    <p><code>Get-PhysicalDisk | Select FriendlyName, MediaType, HealthStatus, OperationalStatus</code></p>
+
+    <h2>5. Когда пора менять SSD</h2>
+    <p>Диск не нужно менять «на всякий случай», но есть чёткие сигналы, что пора:</p>
+    <ul>
+      <li><strong>Износ выше 80–90%</strong> по SMART — остаточный ресурс небольшой.</li>
+      <li><strong>Растёт число переназначенных секторов</strong> (Reallocated Sector Count) или выросли Media Errors.</li>
+      <li><strong>В Event Log появились ошибки диска</strong> — например, «The device has a bad block».</li>
+      <li><strong>Диск перешёл в режим «только чтение»</strong> — запись больше невозможна.</li>
+      <li><strong>Симптомы:</strong> зависания, пропадание диска из системы, ошибки файловой системы.</li>
+    </ul>
+    <p><strong>Первое действие при любом из сигналов — резервная копия.</strong> Только потом — замена.</p>
+
+    <h2>6. Какой SSD выбрать на замену</h2>
+    <p>Если ноутбук или ПК с SATA — берите 2.5″ SATA SSD, если есть слот M.2 — NVMe будет в разы быстрее. Ниже — популярные варианты под разные задачи (ссылки обновляются).</p>
+
+    <table class="price-table">
+      <thead>
+        <tr><th>Модель</th><th>Интерфейс</th><th>Объём</th><th>Кому подойдёт</th><th>Цена</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Kingston A400</strong></td><td>SATA</td><td>480 ГБ</td><td>Бюджетная замена в старый ноутбук</td>
+          <td><a href="#" rel="nofollow sponsored" target="_blank">Смотреть</a></td>
+        </tr>
+        <tr>
+          <td><strong>Samsung 870 EVO</strong></td><td>SATA</td><td>500 ГБ</td><td>Надёжность и ресурс выше среднего</td>
+          <td><a href="#" rel="nofollow sponsored" target="_blank">Смотреть</a></td>
+        </tr>
+        <tr>
+          <td><strong>WD Blue SN580</strong></td><td>NVMe M.2</td><td>500 ГБ</td><td>Быстрая система, повседневные задачи</td>
+          <td><a href="#" rel="nofollow sponsored" target="_blank">Смотреть</a></td>
+        </tr>
+        <tr>
+          <td><strong>Crucial P3</strong></td><td>NVMe M.2</td><td>1 ТБ</td><td>Много данных и игр</td>
+          <td><a href="#" rel="nofollow sponsored" target="_blank">Смотреть</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="buy-box">
+      <h3>🛒 Что понадобится для замены</h3>
+      <ul>
+        <!-- ЗДЕСЬ ВСТАВИТЬ ПАРТНЁРСКИЕ ССЫЛКИ (Такпродам/Admitad) -->
+        <li><strong>SSD под ваш слот</strong> — <a href="#" rel="nofollow sponsored" target="_blank">выбрать на Ozon</a> или <a href="#" rel="nofollow sponsored" target="_blank">в Ситилинк</a>.</li>
+        <li><strong>Отвёртка / набор для разборки</strong> — <a href="#" rel="nofollow sponsored" target="_blank">смотреть</a>, если меняете сами.</li>
+        <li><strong>USB-адаптер SATA</strong> — <a href="#" rel="nofollow sponsored" target="_blank">смотреть</a>, чтобы клонировать старый диск.</li>
+      </ul>
+      <p>Не готовы разбирать технику? <a href="#" rel="nofollow sponsored" target="_blank">Вызвать мастера</a> — заменят диск и перенесут систему с гарантией.</p>
+    </div>
+
+    <h2>7. Частые вопросы (FAQ)</h2>
+
+    <h3>Вредно ли дефрагментировать SSD?</h3>
+    <p>Да. Обычная дефрагментация создаёт лишние циклы записи и расходует ресурс. SSD нужна не дефрагментация, а команда <strong>TRIM</strong> — Windows 10/11 выполняет её автоматически, если включена оптимизация дисков.</p>
+
+    <h3>Сколько живёт SSD-диск?</h3>
+    <p>Зависит от TBW и нагрузки. Для домашнего использования это обычно 5–10 лет. Точный остаток показывает SMART; при износе выше 80% планируйте замену.</p>
+
+    <h3>Что значит износ 66%?</h3>
+    <p>Диск израсходовал 66% заявленного ресурса записи. Он ещё работает, но остаток ограничен — настройте резервное копирование и присмотрите замену.</p>
+
+    <h3>Можно ли продлить жизнь SSD?</h3>
+    <p>Да: не забивайте диск «под завязку» (оставляйте 10–15% свободно), включите TRIM и не отключайте оптимизацию, не переносите на SSD тяжёлые постоянные перезаписи (торренты, логи).</p>
+
+    <h2>Заключение</h2>
+    <p>Проверить износ SSD в Windows можно за пару минут — достаточно заглянуть в SMART. Ориентируйтесь на правило «80%»: пока износ ниже, диск в рабочем диапазоне, но резервную копию стоит держать всегда. А если диск уже на пределе — <a href="index.html">pc-diag</a> покажет не только износ, но и общее состояние системы, а таблица выше поможет выбрать замену.</p>
+
+    <p>Читайте также: <a href="article1.html">почему шумит вентилятор в ноутбуке и что делать</a>.</p>
+  </article>
+
+  <footer>
+    <p>
+      <a href="index.html">Главная</a> ·
+      <a href="https://github.com/progerman666/pc-diag">GitHub</a> ·
+      <a href="https://t.me/remont_teh_ru">Telegram</a>
+    </p>
+    <p style="margin-top: 10px;">Сделано с ❤ для тех, кто чинит компьютеры</p>
+  </footer>
+</div>
+</body>
+</html>
